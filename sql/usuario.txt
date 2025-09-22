@@ -1,0 +1,5 @@
+CREATE USER pucara IDENTIFIED BY pucara123;
+GRANT CONNECT, RESOURCE TO pucara;
+ALTER USER pucara QUOTA UNLIMITED ON USERS;
+
+usar ese usuario con la ip de host y este sercicio XEPDB1
