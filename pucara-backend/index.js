@@ -10,7 +10,7 @@ app.use(express.json());
 const dbConfig = {
   user: "pucara",
   password: "pucara123",
-  connectString: "TU_IP:1521/XEPDB1" // reemplaza TU_IP con tu IP
+  connectString: "192.168.0.107:1521/XEPDB1" // reemplaza TU_IP con tu IP
 };
 
 // Helper para ejecutar queries
@@ -247,56 +247,122 @@ app.delete('/servicios/:id', async (req, res) => {
 // RUTAS CITAS
 /////////////////////////
 
+// LISTAR CITAS CON DETALLE
+// ==========================
+// 📌 RUTAS CITAS
+// ==========================
+
+// Obtener todas las citas
 app.get('/citas', async (req, res) => {
   try {
-    const result = await executeQuery('SELECT * FROM citas');
+    const result = await executeQuery(
+      `SELECT * FROM citas ORDER BY fecha_hora DESC`
+    );
     res.json(result.rows);
-  } catch {
-    res.status(500).send('Error al obtener citas');
+  } catch (err) {
+    console.error('Error al obtener citas:', err);
+    res.status(500).json({ error: 'Error al obtener citas' });
   }
 });
 
+// Obtener una cita por ID
+app.get('/citas/:id', async (req, res) => {
+  try {
+    const result = await executeQuery(
+      `SELECT * FROM citas WHERE id_cita = :id`,
+      { id: req.params.id }
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al obtener cita:', err);
+    res.status(500).json({ error: 'Error al obtener cita' });
+  }
+});
+
+// Crear una nueva cita
 app.post('/citas', async (req, res) => {
-  const { fecha_hora, estado, id_cliente, id_mascota, id_profesional, id_servicio } = req.body;
   try {
-    await executeQuery(
-      `INSERT INTO citas (fecha_hora, estado, id_cliente, id_mascota, id_profesional, id_servicio)
-       VALUES (:fecha_hora, :estado, :id_cliente, :id_mascota, :id_profesional, :id_servicio)`,
-      [fecha_hora, estado || 'Pendiente', id_cliente, id_mascota, id_profesional, id_servicio],
+    const { id_cliente, id_mascota, fecha_hora,  estado, id_profesional, id_servicio } = req.body;
+
+    const result = await executeQuery(
+      `INSERT INTO citas (id_cliente, id_mascota, fecha_hora,  estado, id_profesional, id_servicio) 
+       VALUES (:id_cliente, :id_mascota, :fecha,  :estado, :id_profesional, :id_servicio)`,
+      {
+        id_cliente,
+        id_mascota,
+        fecha: new Date(fecha_hora),  // 👈 Aquí lo pasamos como Date
+        estado,
+        id_profesional,
+        id_servicio
+      },
       true
     );
-    res.send('Cita agregada');
-  } catch {
-    res.status(500).send('Error al agregar cita');
+
+    res.status(201).json({ message: 'Cita creada correctamente' });
+  } catch (err) {
+    console.error('Error al crear cita:', err);
+    res.status(500).json({ error: 'Error al crear cita' });
   }
 });
 
+// Actualizar una cita
 app.put('/citas/:id', async (req, res) => {
-  const { id } = req.params;
-  const { fecha_hora, estado, id_cliente, id_mascota, id_profesional, id_servicio } = req.body;
   try {
-    await executeQuery(
-      `UPDATE citas SET fecha_hora=:fecha_hora, estado=:estado, id_cliente=:id_cliente, 
-       id_mascota=:id_mascota, id_profesional=:id_profesional, id_servicio=:id_servicio
-       WHERE id_cita=:id`,
-      [fecha_hora, estado, id_cliente, id_mascota, id_profesional, id_servicio, id],
+    const { id_cliente, id_mascota, fecha_hora, estado, id_profesional, id_servicio } = req.body;
+
+    const result = await executeQuery(
+      `UPDATE citas 
+       SET id_cliente = :id_cliente,
+           id_mascota = :id_mascota,
+           fecha_hora = :fecha,
+           estado = :estado
+           id_profesional = :id_profesional
+           id_servicio = :id_servicio
+       WHERE id_cita = :id`,
+      {
+        id: req.params.id,
+        id_cliente,
+        id_mascota,
+        fecha: new Date(fecha_hora),
+        motivo,
+        estado,
+        id_profesional,
+        id_servicio
+      },
       true
     );
-    res.send('Cita actualizada');
-  } catch {
-    res.status(500).send('Error al actualizar cita');
+
+    res.json({ message: 'Cita actualizada correctamente' });
+  } catch (err) {
+    console.error('Error al actualizar cita:', err);
+    res.status(500).json({ error: 'Error al actualizar cita' });
   }
 });
 
+// Eliminar una cita
 app.delete('/citas/:id', async (req, res) => {
-  const { id } = req.params;
   try {
-    await executeQuery('DELETE FROM citas WHERE id_cita=:id', [id], true);
-    res.send('Cita eliminada');
-  } catch {
-    res.status(500).send('Error al eliminar cita');
+    console.log("ID recibido desde frontend:", req.params.id); // 👈 debug
+
+    const id = Number(req.params.id); // convierte a número
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "El ID recibido no es válido" });
+    }
+
+    const result = await executeQuery(
+      `DELETE FROM citas WHERE id_cita = :id`,
+      { id },
+      true  
+    );
+
+    res.json({ message: 'Cita eliminada correctamente' });
+  } catch (err) {
+    console.error('Error al eliminar cita:', err);
+    res.status(500).json({ error: 'Error al eliminar cita' });
   }
 });
+
+
 
 /////////////////////////
 // RUTAS ARTÍCULOS
@@ -350,4 +416,8 @@ app.post('/contactos', async (req, res) => {
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Backend corriendo en http://localhost:${PORT}`);
+});
+
+app.get("/", (req, res) => {
+  res.send("API de la Veterinaria funcionando 🚀");
 });
