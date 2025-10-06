@@ -13,8 +13,7 @@ const dbConfig = {
   connectString: "192.168.0.107:1521/XEPDB1" // reemplaza TU_IP con tu IP
 };
 
-// Helper para ejecutar queries
-async function executeQuery(query, binds = [], autoCommit = false) {
+async function executeQuery(query, binds = {}, autoCommit = false) {
   let connection;
   try {
     connection = await oracledb.getConnection(dbConfig);
@@ -47,7 +46,7 @@ app.post('/clientes', async (req, res) => {
     await executeQuery(
       `INSERT INTO clientes (nombre, apellido, telefono, email, direccion)
        VALUES (:nombre, :apellido, :telefono, :email, :direccion)`,
-      [nombre, apellido, telefono, email, direccion],
+      {nombre, apellido, telefono, email, direccion},
       true
     );
     res.send('Cliente agregado');
@@ -63,7 +62,7 @@ app.put('/clientes/:id', async (req, res) => {
     await executeQuery(
       `UPDATE clientes SET nombre=:nombre, apellido=:apellido, telefono=:telefono, email=:email, direccion=:direccion
        WHERE id_cliente=:id`,
-      [nombre, apellido, telefono, email, direccion, id],
+    {nombre, apellido, telefono, email, direccion, id},
       true
     );
     res.send('Cliente actualizado');
@@ -75,7 +74,7 @@ app.put('/clientes/:id', async (req, res) => {
 app.delete('/clientes/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await executeQuery('DELETE FROM clientes WHERE id_cliente=:id', [id], true);
+    await executeQuery('DELETE FROM clientes WHERE id_cliente=:id', {id}, true);
     res.send('Cliente eliminado');
   } catch {
     res.status(500).send('Error al eliminar cliente');
@@ -101,7 +100,7 @@ app.post('/mascotas', async (req, res) => {
     await executeQuery(
       `INSERT INTO mascotas (nombre, especie, raza, edad, id_cliente)
        VALUES (:nombre, :especie, :raza, :edad, :id_cliente)`,
-      [nombre, especie, raza, edad, id_cliente],
+      {nombre, especie, raza, edad, id_cliente},
       true
     );
     res.send('Mascota agregada');
@@ -117,7 +116,7 @@ app.put('/mascotas/:id', async (req, res) => {
     await executeQuery(
       `UPDATE mascotas SET nombre=:nombre, especie=:especie, raza=:raza, edad=:edad, id_cliente=:id_cliente
        WHERE id_mascota=:id`,
-      [nombre, especie, raza, edad, id_cliente, id],
+      {nombre, especie, raza, edad, id_cliente, id},
       true
     );
     res.send('Mascota actualizada');
@@ -129,7 +128,7 @@ app.put('/mascotas/:id', async (req, res) => {
 app.delete('/mascotas/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await executeQuery('DELETE FROM mascotas WHERE id_mascota=:id', [id], true);
+    await executeQuery('DELETE FROM mascotas WHERE id_mascota=:id', {id}, true);
     res.send('Mascota eliminada');
   } catch {
     res.status(500).send('Error al eliminar mascota');
@@ -155,7 +154,7 @@ app.post('/profesionales', async (req, res) => {
     await executeQuery(
       `INSERT INTO profesionales (nombre, apellido, especialidad, telefono, email)
        VALUES (:nombre, :apellido, :especialidad, :telefono, :email)`,
-      [nombre, apellido, especialidad, telefono, email],
+      {nombre, apellido, especialidad, telefono, email},
       true
     );
     res.send('Profesional agregado');
@@ -171,7 +170,7 @@ app.put('/profesionales/:id', async (req, res) => {
     await executeQuery(
       `UPDATE profesionales SET nombre=:nombre, apellido=:apellido, especialidad=:especialidad, telefono=:telefono, email=:email
        WHERE id_profesional=:id`,
-      [nombre, apellido, especialidad, telefono, email, id],
+      {nombre, apellido, especialidad, telefono, email, id},
       true
     );
     res.send('Profesional actualizado');
@@ -183,7 +182,7 @@ app.put('/profesionales/:id', async (req, res) => {
 app.delete('/profesionales/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await executeQuery('DELETE FROM profesionales WHERE id_profesional=:id', [id], true);
+    await executeQuery('DELETE FROM profesionales WHERE id_profesional=:id', {id}, true);
     res.send('Profesional eliminado');
   } catch {
     res.status(500).send('Error al eliminar profesional');
@@ -209,7 +208,7 @@ app.post('/servicios', async (req, res) => {
     await executeQuery(
       `INSERT INTO servicios (nombre, descripcion, precio)
        VALUES (:nombre, :descripcion, :precio)`,
-      [nombre, descripcion, precio],
+      {nombre, descripcion, precio},
       true
     );
     res.send('Servicio agregado');
@@ -224,7 +223,7 @@ app.put('/servicios/:id', async (req, res) => {
   try {
     await executeQuery(
       `UPDATE servicios SET nombre=:nombre, descripcion=:descripcion, precio=:precio WHERE id_servicio=:id`,
-      [nombre, descripcion, precio, id],
+      {nombre, descripcion, precio, id},
       true
     );
     res.send('Servicio actualizado');
@@ -236,7 +235,7 @@ app.put('/servicios/:id', async (req, res) => {
 app.delete('/servicios/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await executeQuery('DELETE FROM servicios WHERE id_servicio=:id', [id], true);
+    await executeQuery('DELETE FROM servicios WHERE id_servicio=:id', {id}, true);
     res.send('Servicio eliminado');
   } catch {
     res.status(500).send('Error al eliminar servicio');
@@ -252,7 +251,7 @@ app.delete('/servicios/:id', async (req, res) => {
 // 📌 RUTAS CITAS
 // ==========================
 
-// Obtener todas las citas
+// 📌 Obtener todas las citas
 app.get('/citas', async (req, res) => {
   try {
     const result = await executeQuery(
@@ -265,12 +264,17 @@ app.get('/citas', async (req, res) => {
   }
 });
 
-// Obtener una cita por ID
-app.get('/citas/:id', async (req, res) => {
+// 📌 Obtener una cita por ID
+app.get('/citas/:id_citas', async (req, res) => {
   try {
+    const id_citas = Number(req.params.id_citas);
+    if (isNaN(id_citas)) {
+      return res.status(400).json({ error: "El ID recibido no es válido" });
+    }
+
     const result = await executeQuery(
       `SELECT * FROM citas WHERE id_cita = :id`,
-      { id: req.params.id }
+      { id }
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -279,81 +283,85 @@ app.get('/citas/:id', async (req, res) => {
   }
 });
 
-// Crear una nueva cita
-app.post('/citas', async (req, res) => {
-  try {
-    const { id_cliente, id_mascota, fecha_hora,  estado, id_profesional, id_servicio } = req.body;
+// 📌 Crear una nueva cita
+app.post('/citas',
+  validateNumbers(['id_cliente', 'id_mascota', 'id_profesional', 'id_servicio']),
+  async (req, res) => {
+    try {
+      const { id_cliente, id_mascota, fecha_hora, estado, id_profesional, id_servicio } = req.body;
 
-    const result = await executeQuery(
-      `INSERT INTO citas (id_cliente, id_mascota, fecha_hora,  estado, id_profesional, id_servicio) 
-       VALUES (:id_cliente, :id_mascota, :fecha,  :estado, :id_profesional, :id_servicio)`,
-      {
-        id_cliente,
-        id_mascota,
-        fecha: new Date(fecha_hora),  // 👈 Aquí lo pasamos como Date
-        estado,
-        id_profesional,
-        id_servicio
-      },
-      true
-    );
+      await executeQuery(
+        `INSERT INTO citas (id_cliente, id_mascota, fecha_hora, estado, id_profesional, id_servicio) 
+         VALUES (:id_cliente, :id_mascota, :fecha, :estado, :id_profesional, :id_servicio)`,
+        {
+          id_cliente,
+          id_mascota,
+          fecha: new Date(fecha_hora), // ✅ lo pasamos como Date
+          estado,
+          id_profesional,
+          id_servicio
+        },
+        true
+      );
 
-    res.status(201).json({ message: 'Cita creada correctamente' });
-  } catch (err) {
-    console.error('Error al crear cita:', err);
-    res.status(500).json({ error: 'Error al crear cita' });
+      res.status(201).json({ message: 'Cita creada correctamente' });
+    } catch (err) {
+      console.error('Error al crear cita:', err);
+      res.status(500).json({ error: 'Error al crear cita' });
+    }
   }
-});
+);
 
-// Actualizar una cita
-app.put('/citas/:id', async (req, res) => {
-  try {
-    const { id_cliente, id_mascota, fecha_hora, estado, id_profesional, id_servicio } = req.body;
+// 📌 Actualizar una cita
+app.put('/citas/:id',
+  validateNumbers(['id_cliente', 'id_mascota', 'id_profesional', 'id_servicio']),
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "El ID recibido no es válido" });
+      }
 
-    const result = await executeQuery(
-      `UPDATE citas 
-       SET id_cliente = :id_cliente,
-           id_mascota = :id_mascota,
-           fecha_hora = :fecha,
-           estado = :estado
-           id_profesional = :id_profesional
-           id_servicio = :id_servicio
-       WHERE id_cita = :id`,
-      {
-        id: req.params.id,
-        id_cliente,
-        id_mascota,
-        fecha: new Date(fecha_hora),
-        motivo,
-        estado,
-        id_profesional,
-        id_servicio
-      },
-      true
-    );
+      const { id_cliente, id_mascota, fecha_hora, estado, id_profesional, id_servicio } = req.body;
 
-    res.json({ message: 'Cita actualizada correctamente' });
-  } catch (err) {
-    console.error('Error al actualizar cita:', err);
-    res.status(500).json({ error: 'Error al actualizar cita' });
+      await executeQuery(
+        `UPDATE citas 
+         SET id_cliente = :id_cliente,
+             id_mascota = :id_mascota,
+             fecha_hora = :fecha,
+             estado = :estado,
+             id_profesional = :id_profesional,
+             id_servicio = :id_servicio
+         WHERE id_cita = :id`,
+        {
+          id,
+          id_cliente,
+          id_mascota,
+          fecha: new Date(fecha_hora),
+          estado,
+          id_profesional,
+          id_servicio
+        },
+        true
+      );
+
+      res.json({ message: 'Cita actualizada correctamente' });
+    } catch (err) {
+      console.error('Error al actualizar cita:', err);
+      res.status(500).json({ error: 'Error al actualizar cita' });
+    }
   }
-});
+);
 
-// Eliminar una cita
+// 📌 Eliminar una cita
 app.delete('/citas/:id', async (req, res) => {
   try {
-    console.log("ID recibido desde frontend:", req.params.id); // 👈 debug
-
-    const id = Number(req.params.id); // convierte a número
+    const id = Number(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ error: "El ID recibido no es válido" });
     }
 
-    const result = await executeQuery(
-      `DELETE FROM citas WHERE id_cita = :id`,
-      { id },
-      true  
-    );
+    await executeQuery(`DELETE FROM citas WHERE id_cita = :id`, { id }, true);
 
     res.json({ message: 'Cita eliminada correctamente' });
   } catch (err) {
@@ -361,6 +369,7 @@ app.delete('/citas/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar cita' });
   }
 });
+
 
 
 
@@ -382,7 +391,7 @@ app.post('/articulos', async (req, res) => {
   try {
     await executeQuery(
       `INSERT INTO articulos (titulo, contenido, fecha) VALUES (:titulo, :contenido, :fecha)`,
-      [titulo, contenido, fecha],
+      {titulo, contenido, fecha},
       true
     );
     res.send('Artículo agregado');
@@ -400,7 +409,7 @@ app.post('/contactos', async (req, res) => {
   try {
     await executeQuery(
       `INSERT INTO contactos (nombre, email, mensaje) VALUES (:nombre, :email, :mensaje)`,
-      [nombre, email, mensaje],
+      {nombre, email, mensaje},
       true
     );
     res.send('Contacto recibido');
@@ -421,3 +430,25 @@ app.listen(PORT, () => {
 app.get("/", (req, res) => {
   res.send("API de la Veterinaria funcionando 🚀");
 });
+
+
+//////////////////////////////
+// VALIDACIÓN DE NÚMEROS
+//////////////////////////////
+function validateNumbers(fields) {
+  return (req, res, next) => {
+    for (const field of fields) {
+      if (req.body[field] !== undefined) {
+        const num = Number(req.body[field]);
+        if (isNaN(num)) {
+          return res.status(400).json({
+            error: `El campo ${field} debe ser un número válido`
+          });
+        }
+        req.body[field] = num; // ✅ Convertimos a número real
+      }
+    }
+    next();
+  };
+}
+
