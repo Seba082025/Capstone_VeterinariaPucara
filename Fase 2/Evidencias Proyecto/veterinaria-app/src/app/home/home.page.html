@@ -1,0 +1,83 @@
+<ion-content class="home-page">
+
+  <!-- Barra de navegación -->
+  <div class="navbar">
+    <div class="nav-logo">
+      <img src="./../../assets/Img/logo3.png" alt="Logo Veterinaria" />
+      <span>Veterinaria Pucará</span>
+    </div>
+    <div class="nav-links">
+      <a href="#">Inicio</a>
+      <a href="#">Servicios</a>
+      <a href="#">Nosotros</a>
+      <a href="#">Contacto</a>
+      <ion-button color="success" routerLink="/reserva">Reserva tu hora</ion-button>
+    </div>
+  </div>
+
+  <!-- Contenedor principal -->
+  <section class="info-container">
+    <!-- Imagen y datos -->
+    <div class="left-section">
+      <img src="./../../assets/Img/gatitos.png" alt="Gatitos - Clínica Veterinaria Pucará" class="main-img" />
+      <h2>Clínica Veterinaria Pucará</h2>
+    </div>
+
+    <!-- Mapa y contacto -->
+    <div class="right-section">
+      <iframe
+        width="100%"
+        height="260"
+        frameborder="0"
+        style="border:0; border-radius: 12px;"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3323.242775794085!2d-70.7002193!3d-33.59900479999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662d944196ced8f%3A0xba43cefe87f2f772!2sClinica%20Veterinaria%20Pucara!5e0!3m2!1ses!2scl!4v1762262443196!5m2!1ses!2scl"
+        allowfullscreen>
+      </iframe>
+
+      <div class="contact-info">
+        <p><ion-icon name="location-outline"></ion-icon> Esmeralda 97, San Bernardo</p>
+        <p><ion-icon name="call-outline"></ion-icon> +56 2 2859 2840</p>
+        <p><ion-icon name="logo-whatsapp"></ion-icon>
+          <a href="https://wa.me/56972446539" target="_blank">¡Escríbenos por WhatsApp!</a>
+        </p>
+      </div>
+
+      <div class="buttons">
+        <ion-button color="success" routerLink="/reserva">Reserva tu hora</ion-button>
+        <ion-button fill="outline" color="dark" href="tel:+56228592840">Llámanos</ion-button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pie de página -->
+  <footer>
+    <div class="footer-content">
+      <div>
+        <h4>Información</h4>
+        <ul>
+          <li><a href="#">Nuestra Clínica</a></li>
+          <li><a href="#">Preguntas Frecuentes</a></li>
+          <li><a href="#">Trabaja con Nosotros</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Políticas</h4>
+        <ul>
+          <li><a href="#">Privacidad</a></li>
+          <li><a href="#">Términos y Condiciones</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Contáctanos</h4>
+        <p>contacto@veterinaria.cl</p>
+        <p>+56 2 2859 2840</p>
+      </div>  
+    </div>
+
+    <div class="footer-bottom">
+      © 2025 Clínica Veterinaria Pucará. Todos los derechos reservados.
+    </div>
+  </footer>
+</ion-content>

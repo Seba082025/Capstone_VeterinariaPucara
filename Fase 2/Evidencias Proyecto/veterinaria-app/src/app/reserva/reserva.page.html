@@ -1,0 +1,140 @@
+<ion-content class="reserva-page ion-padding">
+  <!-- CONTENEDOR GLOBAL -->
+  <div class="reserva-container">
+
+    <!-- Barra de navegación -->
+    <div class="navbar">
+      <div class="nav-logo">
+        <img src="./../../assets/Img/logo3.png" alt="Logo Veterinaria" />
+        <span>Veterinaria Pucará</span>
+      </div>
+      <div class="nav-links">
+        <a href="#">Inicio</a>
+        <a href="#">Servicios</a>
+        <a href="#">Nosotros</a>
+        <a href="#">Contacto</a>
+        <ion-button color="success" routerLink="/reserva">Reserva tu hora</ion-button>
+      </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <main class="contenido">
+      <ion-segment [(ngModel)]="paso" value="servicio" mode="ios">
+        <ion-segment-button value="servicio"><ion-label>1. Servicio</ion-label></ion-segment-button>
+        <ion-segment-button value="fecha"><ion-label>2. Fecha y hora</ion-label></ion-segment-button>
+        <ion-segment-button value="profesional"><ion-label>3. Profesional</ion-label></ion-segment-button>
+        <ion-segment-button value="datos"><ion-label>4. Datos</ion-label></ion-segment-button>
+      </ion-segment>
+
+      <!-- PASO 1 -->
+      <div *ngIf="paso === 'servicio'" class="paso">
+        <h2>Selecciona un servicio veterinario</h2>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="12" size-md="6" *ngFor="let s of servicios">
+              <ion-card (click)="seleccionarServicio(s.ID_SERVICIO || s.id_servicio)"
+                        [class.selected]="cita.id_servicio === (s.ID_SERVICIO || s.id_servicio)">
+                <ion-card-header>
+                  <ion-card-title>{{ s.NOMBRE_SERVICIO || s.nombre_servicio || s.nombre }}</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                  <p>{{ s.DESCRIPCION || s.descripcion }}</p>
+                  <p><strong>Precio:</strong> ${{ s.PRECIO || s.precio }}</p>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </div>
+
+      <!-- PASO 2 -->
+      <div *ngIf="paso === 'fecha'" class="paso">
+        <h2>Selecciona fecha y hora</h2>
+        <ion-datetime presentation="date"
+                      [(ngModel)]="fechaSeleccionada"
+                      (ionChange)="cargarHorasDisponibles()"
+                      [min]="today">
+        </ion-datetime>
+
+        <div *ngIf="horasDisponibles.length > 0; else noHoras">
+          <ion-item>
+            <ion-label>Hora</ion-label>
+            <ion-select [(ngModel)]="horaSeleccionada" placeholder="Seleccione hora">
+              <ion-select-option *ngFor="let hora of horasDisponibles" [value]="hora">
+                {{ hora }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <ng-template #noHoras>
+          <p>No hay horas disponibles para esta fecha.</p>
+        </ng-template>
+
+        <ion-button expand="block" (click)="continuarFecha()">Continuar</ion-button>
+      </div>
+
+      <!-- PASO 3 -->
+      <div *ngIf="paso === 'profesional'" class="paso">
+        <h2>Selecciona el profesional</h2>
+        <ion-list>
+          <ion-item button (click)="seleccionarProfesional('Dra. Pérez')">
+            <ion-label>Dra. Pérez (Veterinaria General)</ion-label>
+          </ion-item>
+          <ion-item button (click)="seleccionarProfesional('Dr. Ramírez')">
+            <ion-label>Dr. Ramírez (Especialista en felinos)</ion-label>
+          </ion-item>
+        </ion-list>
+      </div>
+
+      <!-- PASO 4 -->
+      <div *ngIf="paso === 'datos'" class="paso">
+        <h2>Datos del propietario y mascota</h2>
+        <ion-list>
+          <ion-item><ion-input placeholder="Nombre" [(ngModel)]="cliente.nombre"></ion-input></ion-item>
+          <ion-item><ion-input placeholder="Apellido" [(ngModel)]="cliente.apellido"></ion-input></ion-item>
+          <ion-item><ion-input placeholder="RUT" [(ngModel)]="cliente.rut"></ion-input></ion-item>
+          <ion-item><ion-input placeholder="Teléfono" [(ngModel)]="cliente.telefono"></ion-input></ion-item>
+          <ion-item><ion-input placeholder="Email" [(ngModel)]="cliente.email"></ion-input></ion-item>
+          <ion-item><ion-input placeholder="Nombre de la mascota" [(ngModel)]="cliente.nombre_mascota"></ion-input></ion-item>
+          <ion-item><ion-input placeholder="Raza" [(ngModel)]="cliente.raza"></ion-input></ion-item>
+          <ion-item><ion-input placeholder="Tipo de mascota" [(ngModel)]="cliente.tipo_mascota"></ion-input></ion-item>
+        </ion-list>
+
+        <ion-button expand="block" color="success" (click)="reservar()">Confirmar Reserva</ion-button>
+      </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer>
+      <div class="footer-content">
+        <div>
+          <h4>Información</h4>
+          <ul>
+            <li><a href="#">Nuestra Clínica</a></li>
+            <li><a href="#">Preguntas Frecuentes</a></li>
+            <li><a href="#">Trabaja con Nosotros</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Políticas</h4>
+          <ul>
+            <li><a href="#">Privacidad</a></li>
+            <li><a href="#">Términos y Condiciones</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Contáctanos</h4>
+          <p>contacto@veterinaria.cl</p>
+          <p>+56 2 2859 2840</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        © 2025 Clínica Veterinaria Pucará. Todos los derechos reservados.
+      </div>
+    </footer>
+  </div>
+</ion-content>

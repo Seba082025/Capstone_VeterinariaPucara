@@ -1,0 +1,7 @@
+{
+  "name": "veterinaria-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
