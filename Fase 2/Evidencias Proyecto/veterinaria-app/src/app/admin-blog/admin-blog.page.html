@@ -1,0 +1,100 @@
+<!-- ✅ src/app/admin-blog/admin-blog.page.html -->
+<ion-content class="admin-blog-page ion-padding">
+  
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="nav-logo">
+      <img src="./../../assets/Img/logo3.png" alt="Logo Veterinaria" />
+      <span>Veterinaria Pucará Blog Admin</span>
+    </div>
+    <div class="nav-links">
+      <a href="/admin-dashboard">Adm Citas</a>
+      <ion-button color="success"  (click)="nuevo()">Nuevo post</ion-button>
+      <ion-button color="danger" (click)="logout()">Cerrar sesión</ion-button>
+    </div>
+  </div>
+
+
+  <!-- Filtro / búsqueda -->
+  <div class="searchbar">
+    <ion-item lines="none">
+      <ion-icon name="search-outline" slot="start"></ion-icon>
+      <ion-input [(ngModel)]="search" placeholder="Buscar por título o contenido" (ionInput)="aplicarFiltro()"></ion-input>
+      <ion-button fill="clear" size="small" (click)="limpiarBusqueda()">Limpiar</ion-button>
+    </ion-item>
+  </div>
+
+  <!-- Lista de posts -->
+  <ion-grid *ngIf="filtrados.length; else sinPosts">
+    <ion-row class="header">
+      <ion-col size="4">Artículo</ion-col>
+      <ion-col size="2">Fecha</ion-col>
+      <ion-col size="4">Resumen</ion-col>
+      <ion-col size="2" class="center">Acciones</ion-col>
+    </ion-row>
+
+    <ion-row class="post-row" *ngFor="let p of filtrados">
+      <ion-col size="4" class="title-cell">
+        <div class="thumb" *ngIf="p.imagen_url">
+          <img [src]="p.imagen_url" alt="img">
+        </div>
+        <div class="title">
+          <div class="t">{{ p.titulo }}</div>
+          <div class="id">#{{ p.id_post }}</div>
+        </div>
+      </ion-col>
+
+      <ion-col size="2">
+        {{ p.fecha }}
+      </ion-col>
+
+      <ion-col size="4" class="resumen">
+        {{ p.contenido?.toString() | slice:0:140 }}{{ (p.contenido?.toString().length || 0) > 140 ? '…' : '' }}
+      </ion-col>
+
+      <ion-col size="2" class="center">
+        <ion-button size="small" color="warning" fill="clear" (click)="editar(p)">✎</ion-button>
+        <ion-button size="small" color="danger" fill="clear" (click)="eliminar(p)">🗑</ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ng-template #sinPosts>
+    <p class="no-data">Todavía no hay publicaciones. ¡Crea la primera!</p>
+  </ng-template>
+
+
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-content">
+      <div>
+        <h4>Información</h4>
+        <ul>
+          <li><a href="#">Nuestra Clínica</a></li>
+          <li><a href="#">Preguntas Frecuentes</a></li>
+          <li><a href="/admin-login">Ingreso Admin</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Políticas</h4>
+        <ul>
+          <li><a href="#">Privacidad</a></li>
+          <li><a href="#">Términos y Condiciones</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Contáctanos</h4>
+        <p>contacto@veterinaria.cl</p>
+        <p>+56 2 2859 2840</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      © 2025 Clínica Veterinaria Pucará. Todos los derechos reservados.
+    </div>
+  </footer>
+
+</ion-content>

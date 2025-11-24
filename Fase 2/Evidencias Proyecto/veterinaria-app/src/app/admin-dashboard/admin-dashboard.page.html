@@ -1,0 +1,113 @@
+<ion-content class="admin-dashboard-page ion-padding">
+
+
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="nav-logo">
+      <img src="./../../assets/Img/logo3.png" alt="Logo Veterinaria" />
+      <span>Veterinaria Pucará Citas Admin</span>
+    </div>
+    <div class="nav-links">
+      <a href="/reserva">Crear Cita</a>
+      <a href="/admin-blog">Adm Blog</a>
+      <ion-button color="danger" (click)="logout()">Cerrar sesión</ion-button>
+    </div>
+  </div>
+
+
+  <h1>Gestión de Citas</h1>
+
+  <!-- 🔹 Filtros -->
+  <div class="filter-bar">
+    <ion-item lines="none">
+      <ion-label>Estado:</ion-label>
+      <ion-select [(ngModel)]="filtroEstado" (ionChange)="onFiltroChange()">
+        <ion-select-option value="todas">Todas</ion-select-option>
+        <ion-select-option value="pendiente">Pendientes</ion-select-option>
+        <ion-select-option value="confirmada">Confirmadas</ion-select-option>
+        <ion-select-option value="cancelada">Canceladas</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item lines="none">
+      <ion-label>Fecha:</ion-label>
+      <ion-input type="date" [(ngModel)]="filtroFecha" (ionChange)="onFiltroChange()"></ion-input>
+    </ion-item>
+  </div>
+
+  <!-- 🔹 Tabla -->
+  <ion-grid *ngIf="citasFiltradas.length > 0; else sinCitas">
+    <ion-row class="header-row">
+      <ion-col size="1">ID</ion-col>
+      <ion-col size="2">Cliente</ion-col>
+      <ion-col size="2">Telefono</ion-col>
+      <ion-col size="2">Servicio</ion-col>
+      <ion-col size="2">Fecha</ion-col>
+      <ion-col size="1.5">Estado</ion-col>
+      <ion-col size="1.5">Acciones</ion-col>
+    </ion-row>
+
+    <ion-row *ngFor="let c of citasFiltradas">
+      <ion-col size="1">{{ c.ID_CITA }}</ion-col>
+      <ion-col size="2">{{ c.NOMBRE }} {{ c.APELLIDO }}</ion-col>
+      <ion-col size="2">{{ c.TELEFONO }}</ion-col>
+      <ion-col size="2">{{ c.NOMBRE_SERVICIO }}</ion-col>
+      <ion-col size="2">{{ c.FECHA_HORA | date:'dd/MM/yyyy HH:mm' }}</ion-col>
+      <ion-col size="1.5">
+        <ion-badge [color]="getEstadoColor(c.ESTADO)">
+          {{ c.ESTADO }}
+        </ion-badge>
+      </ion-col>
+      <ion-col size="1.5" class="acciones">
+        <ion-button size="small" color="success" fill="clear"
+          (click)="actualizarEstado(c.ID_CITA, 'confirmada')">✔</ion-button>
+        <ion-button size="small" color="warning" fill="clear"
+          (click)="editarCita(c)">✎</ion-button>
+        <ion-button size="small" color="danger" fill="clear"
+          (click)="eliminarCita(c.ID_CITA)">🗑</ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ng-template #sinCitas>
+    <p class="no-data">No hay citas registradas.</p>
+  </ng-template>
+
+
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-content">
+      <div>
+        <h4>Información</h4>
+        <ul>
+          <li><a href="#">Nuestra Clínica</a></li>
+          <li><a href="#">Preguntas Frecuentes</a></li>
+          <li><a href="/admin-login">Ingreso Admin</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Políticas</h4>
+        <ul>
+          <li><a href="#">Privacidad</a></li>
+          <li><a href="#">Términos y Condiciones</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Contáctanos</h4>
+        <p>contacto@veterinaria.cl</p>
+        <p>+56 2 2859 2840</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      © 2025 Clínica Veterinaria Pucará. Todos los derechos reservados.
+    </div>
+  </footer>
+
+
+
+</ion-content>

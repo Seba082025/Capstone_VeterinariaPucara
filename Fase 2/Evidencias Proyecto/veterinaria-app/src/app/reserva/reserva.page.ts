@@ -13,10 +13,8 @@ import { CommonModule } from '@angular/common';
 })
 export class ReservaPage implements OnInit {
 
-  // Listado de servicios del backend
   servicios: any[] = [];
 
-  // Datos de cliente (step 4)
   cliente = {
     nombre: '',
     apellido: '',
@@ -28,25 +26,21 @@ export class ReservaPage implements OnInit {
     tipo_mascota: ''
   };
 
-  // Datos de cita (servicio y fecha/hora final)
   cita = { id_servicio: null as number | null, fecha_hora: '' };
 
-  paso: string = 'servicio'; // Paso actual
-  profesional: string = '';   // Nombre profesional
-  today = new Date().toISOString(); // Fecha mínima
+  paso: string = 'servicio';
+  profesional: string = '';
+  today = new Date().toISOString();
 
-  // Variables seleccionadas
   fechaSeleccionada: string = '';
   horaSeleccionada: string = '';
 
-  // Horas predeterminadas
   horasBase: string[] = [
     '09:00', '09:30', '10:00', '10:30',
     '11:00', '11:30', '12:00', '15:00',
     '15:30', '16:00', '16:30', '17:00'
   ];
 
-  // Horas filtradas (disponibles reales)
   horasDisponibles: string[] = [];
 
   constructor(private api: ApiService, private alertCtrl: AlertController) {}
@@ -61,24 +55,29 @@ export class ReservaPage implements OnInit {
     });
   }
 
-  // ✅ Paso 1: seleccionar servicio
+  // ===============================
+  // 1️⃣ Seleccionar servicio
+  // ===============================
   seleccionarServicio(servicioId: number) {
-    this.cita.id_servicio = servicioId;
+    this.cita.id_servicio = Number(servicioId);
+    console.log('✅ Servicio seleccionado:', this.cita.id_servicio);
     this.paso = 'fecha';
   }
 
-  // ✅ Trae horas ocupadas desde backend y filtra las disponibles
+  // ===============================
+  // 2️⃣ Cargar horas disponibles
+  // ===============================
   cargarHorasDisponibles() {
     if (!this.fechaSeleccionada || !this.cita.id_servicio) return;
 
-    const fecha = this.fechaSeleccionada.split('T')[0]; // Sólo YYYY-MM-DD
+    const fecha = this.fechaSeleccionada.split('T')[0];
+    const id_servicio = Number(this.cita.id_servicio); // Aseguramos número
 
-    this.api.getHorasOcupadas(fecha, this.cita.id_servicio).subscribe({
+    console.log(`📤 Buscando horas ocupadas para servicio ${id_servicio} en fecha ${fecha}`);
+
+    this.api.getHorasOcupadas(fecha, id_servicio).subscribe({
       next: (res: any) => {
-        // Aseguramos obtener un array como ['10:00', '15:30']
         const horasOcupadas: string[] = res?.ocupadas || [];
-
-        // Filtrar las horasBase quitando ocupadas
         this.horasDisponibles = this.horasBase.filter(h => !horasOcupadas.includes(h));
 
         console.log('⛔ Ocupadas:', horasOcupadas);
@@ -86,12 +85,14 @@ export class ReservaPage implements OnInit {
       },
       error: (err) => {
         console.error('❌ Error al consultar horas ocupadas:', err);
-        this.horasDisponibles = [...this.horasBase]; // Mostrar todas si falla el backend
+        this.horasDisponibles = [...this.horasBase];
       }
     });
   }
 
-  // ✅ Paso 2: validar y continuar
+  // ===============================
+  // 3️⃣ Continuar a paso siguiente
+  // ===============================
   continuarFecha() {
     if (!this.fechaSeleccionada || !this.horaSeleccionada) {
       alert('Selecciona una fecha y una hora válida.');
@@ -105,13 +106,17 @@ export class ReservaPage implements OnInit {
     console.log('🕒 Fecha final enviada:', this.cita.fecha_hora);
   }
 
-  // ✅ Paso 3: seleccionar profesional
+  // ===============================
+  // 4️⃣ Seleccionar profesional
+  // ===============================
   seleccionarProfesional(nombre: string) {
     this.profesional = nombre;
     this.paso = 'datos';
   }
 
-  // ✅ Paso 4: enviar reserva completa
+  // ===============================
+  // 5️⃣ Confirmar reserva
+  // ===============================
   async reservar() {
     if (!this.cita.id_servicio || !this.cita.fecha_hora) {
       alert('Debes seleccionar servicio, fecha y hora antes de continuar.');
