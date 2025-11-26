@@ -1,0 +1,322 @@
+.admin-profesionales-page {
+  --background: #f8f9fc;
+
+  h1 {
+    text-align: center;
+    color: #0b4bb1;
+    margin: 20px 0;
+    font-weight: 700;
+  }
+
+  .acciones-top {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+
+  /* FORMULARIO */
+  .formulario-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+
+    h2 {
+      text-align: center;
+      color: #0b4bb1;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    ion-input,
+    ion-select {
+      margin-bottom: 10px;
+    }
+  }
+
+  /* LISTADO */
+  .lista .item {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .info p {
+      margin: 2px 0;
+      color: #444;
+    }
+
+    .acciones ion-button {
+      margin-left: 5px;
+    }
+  }
+}
+
+/* ------------------------------- */
+/* ✅ NAVBAR FIJO (FUNCIONAL)      */
+/* ------------------------------- */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 3000;
+
+  background-color: #0b4bb1;
+  padding: 10px 20px;
+  color: white;
+
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Separador para que el contenido no quede oculto */
+.navbar-space {
+  height: 80px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+
+  img {
+    width: 45px;
+    margin-right: 10px;
+  }
+
+  span {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+}
+
+.nav-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+
+  a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* ------------------------------- */
+/* FOOTER                          */
+/* ------------------------------- */
+
+footer {
+  background: linear-gradient(180deg, #0b4bb1 0%, #083b8a 100%);
+  color: white;
+  text-align: center;
+  padding: 20px 10px 15px;
+  margin-top: 40px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+
+  .footer-content {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+
+    h4 {
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+
+      li {
+        margin: 5px 0;
+
+        a {
+          color: white;
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+  }
+
+  .footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 10px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Mejoras responsive adicionales */
+@media (max-width: 600px) {
+  .nav-links {
+    gap: 10px;
+
+    ion-button {
+      --padding-start: 6px;
+      --padding-end: 6px;
+      font-size: 0.8rem;
+    }
+
+    a {
+      font-size: 0.8rem;
+    }
+  }
+
+  .navbar-space {
+    height: 110px;
+  }
+
+  .lista .item {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .acciones {
+      margin-top: 10px;
+    }
+  }
+}
+
+.admin-profesionales-page {
+  --background: #f8f9fc;
+
+  h1 {
+    text-align: center;
+    color: #0b4bb1;
+    margin: 20px 0;
+    font-weight: 700;
+  }
+
+  .acciones-top {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+
+  /* FORMULARIO */
+  .formulario-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+
+    h2 {
+      text-align: center;
+      color: #0b4bb1;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    ion-input,
+    ion-select {
+      margin-bottom: 10px;
+    }
+  }
+
+  /* LISTA */
+  .lista {
+    margin-bottom: 40px;
+
+    .item {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+      .info p {
+        margin: 2px 0;
+        color: #444;
+      }
+
+      .acciones ion-button {
+        margin-left: 5px;
+      }
+    }
+  }
+}
+
+/* ===========================
+   NAVBAR 100% FUNCIONAL
+=========================== */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0b4bb1;
+  padding: 10px 20px;
+  color: white;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 10; /* 👈 EVITA SER TAPADO */
+}
+
+.nav-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ===========================
+   FOOTER RESPONSIVO
+=========================== */
+footer {
+  background: linear-gradient(180deg, #0b4bb1 0%, #083b8a 100%);
+  color: white;
+  text-align: center;
+  padding: 20px 10px 15px;
+  margin-top: 40px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  position: relative;
+  z-index: 5; /* 👈 YA NO SE SOBRE PONE */
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 10px;
+  font-size: 0.85rem;
+}

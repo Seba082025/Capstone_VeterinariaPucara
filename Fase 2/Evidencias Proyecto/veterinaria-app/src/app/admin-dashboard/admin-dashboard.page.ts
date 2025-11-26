@@ -53,7 +53,9 @@ export class AdminDashboardPage implements OnInit {
           TELEFONO: c.TELEFONO,   // 👈 AGREGADO
           NOMBRE_MASCOTA: c.NOMBRE_MASCOTA,
           NOMBRE_SERVICIO: c.NOMBRE_SERVICIO,
-          ID_SERVICIO: c.ID_SERVICIO || 1
+          ID_SERVICIO: c.ID_SERVICIO || 1,
+          NOMBRE_PROFESIONAL: c.NOMBRE_PROFESIONAL,
+          APELLIDO_PROFESIONAL: c.APELLIDO_PROFESIONAL
         }));
 
         this.filtrarCitas();
@@ -192,7 +194,7 @@ export class AdminDashboardPage implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('admin');
+    localStorage.removeItem('adminLogged');
     this.router.navigate(['/admin-login']);
   }
 }

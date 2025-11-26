@@ -10,7 +10,7 @@
       </div>
       <div class="nav-links">
         <a href="#">Inicio</a>
-        <a href="#">Servicios</a>
+        <a href="/blog">Blog</a>
         <a href="#">Nosotros</a>
         <a href="#">Contacto</a>
         <ion-button color="success" routerLink="/reserva">Reserva tu hora</ion-button>
@@ -74,18 +74,29 @@
         <ion-button expand="block" (click)="continuarFecha()">Continuar</ion-button>
       </div>
 
-      <!-- PASO 3 -->
-      <div *ngIf="paso === 'profesional'" class="paso">
-        <h2>Selecciona el profesional</h2>
-        <ion-list>
-          <ion-item button (click)="seleccionarProfesional('Dra. Pérez')">
-            <ion-label>Dra. Pérez (Veterinaria General)</ion-label>
-          </ion-item>
-          <ion-item button (click)="seleccionarProfesional('Dr. Ramírez')">
-            <ion-label>Dr. Ramírez (Especialista en felinos)</ion-label>
-          </ion-item>
-        </ion-list>
-      </div>
+<!-- PASO 3 -->
+<div *ngIf="paso === 'profesional'" class="paso">
+  <h2>Selecciona el profesional</h2>
+
+  <ion-list *ngIf="profesionales.length > 0; else sinProfesionales">
+    <ion-item 
+      button
+      *ngFor="let p of profesionales"
+      (click)="seleccionarProfesional(p)">
+      <ion-label>
+        {{ p.NOMBRE }} {{ p.APELLIDO }} 
+        <div *ngIf="p.TELEFONO || p.EMAIL" style="font-size: 0.9rem;">
+          <span *ngIf="p.TELEFONO">Tel: {{ p.TELEFONO }}</span><br *ngIf="p.TELEFONO && p.EMAIL">
+          <span *ngIf="p.EMAIL">Email: {{ p.EMAIL }}</span>
+        </div>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <ng-template #sinProfesionales>
+    <p>No hay profesionales disponibles para esta fecha y hora.</p>
+  </ng-template>
+</div>
 
       <!-- PASO 4 -->
       <div *ngIf="paso === 'datos'" class="paso">
@@ -113,7 +124,7 @@
           <ul>
             <li><a href="#">Nuestra Clínica</a></li>
             <li><a href="#">Preguntas Frecuentes</a></li>
-            <li><a href="#">Trabaja con Nosotros</a></li>
+            <li><a href="/admin-login">Ingreso Admin</a></li>
           </ul>
         </div>
 

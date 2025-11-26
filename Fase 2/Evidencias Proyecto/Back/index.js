@@ -1,6 +1,6 @@
-// ============================
+// ======================================================================
 // 📦 IMPORTACIONES
-// ============================
+// ======================================================================
 const express = require('express');
 const oracledb = require('oracledb');
 const cors = require('cors');
@@ -9,18 +9,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ============================
+// ======================================================================
 // 🔧 CONFIGURACIÓN ORACLE
-// ============================
+// ======================================================================
 const dbConfig = {
   user: "veterinaria",
   password: "admin",
   connectString: "localhost:1521/XEPDB1"
 };
 
-// ============================
-// 🛠 FUNCIÓN GENÉRICA CONSULTAS
-// ============================
+// ======================================================================
+// 🛠 FUNCIÓN GENÉRICA PARA CONSULTAS
+// ======================================================================
 async function executeQuery(query, binds = {}, autoCommit = false) {
   let conn;
   try {
@@ -38,9 +38,11 @@ async function executeQuery(query, binds = {}, autoCommit = false) {
   }
 }
 
-// ============================
+// ======================================================================
 // 👤 CLIENTES
-// ============================
+// ======================================================================
+
+// Obtener todos los clientes
 app.get('/clientes', async (req, res) => {
   try {
     const result = await executeQuery(
@@ -52,18 +54,30 @@ app.get('/clientes', async (req, res) => {
   }
 });
 
-// 🧾 CREAR CLIENTE + CITA
+// Crear cliente + cita (con profesional)
 app.post('/clientes', async (req, res) => {
   console.log('🟢 Datos recibidos:', req.body);
 
-  const { nombre, apellido, rut, telefono, email, nombre_mascota, raza, tipo_mascota, id_servicio, fecha_hora } = req.body;
+  const {
+    nombre,
+    apellido,
+    rut,
+    telefono,
+    email,
+    nombre_mascota,
+    raza,
+    tipo_mascota,
+    id_servicio,
+    fecha_hora,
+    id_profesional
+  } = req.body;
 
   if (!nombre || !apellido || !rut || !nombre_mascota || !id_servicio || !fecha_hora) {
     return res.status(400).json({ error: 'Faltan datos obligatorios' });
   }
 
   try {
-
+    // 1️⃣ Buscar si ya existe cliente por RUT
     const existe = await executeQuery(
       'SELECT id_cliente FROM clientes WHERE rut = :rut',
       { rut }
@@ -71,6 +85,7 @@ app.post('/clientes', async (req, res) => {
 
     let id_cliente;
 
+    // 2️⃣ Crear o recuperar cliente
     if (existe.length > 0) {
       id_cliente = existe[0].ID_CLIENTE;
     } else {
@@ -86,115 +101,345 @@ app.post('/clientes', async (req, res) => {
         },
         { autoCommit: true }
       );
+
       id_cliente = result.outBinds.id_cliente[0];
       await conn.close();
     }
 
+    // 3️⃣ Insertar CITA con profesional
     const fechaFormateada = fecha_hora.replace("T", " ").substring(0, 19);
 
     await executeQuery(
-      `INSERT INTO citas (id_cliente, id_servicio, fecha_hora, estado)
-       VALUES (:id_cliente, :id_servicio, TO_DATE(:fecha_hora, 'YYYY-MM-DD HH24:MI:SS'), 'pendiente')`,
-      { id_cliente, id_servicio, fecha_hora: fechaFormateada },
+      `INSERT INTO citas (
+        id_cliente,
+        id_servicio,
+        id_profesional,
+        fecha_hora,
+        estado
+      )
+      VALUES (
+        :id_cliente,
+        :id_servicio,
+        :id_profesional,
+        TO_DATE(:fecha_hora, 'YYYY-MM-DD HH24:MI:SS'),
+        'pendiente'
+      )`,
+      {
+        id_cliente,
+        id_servicio,
+        id_profesional,
+        fecha_hora: fechaFormateada
+      },
       true
     );
 
     res.json({ message: '✅ Cita registrada correctamente', id_cliente });
 
   } catch (err) {
-    console.error('❌ Error al registrar:', err);
+    console.error('❌ Error al registrar cliente + cita:', err);
     res.status(500).json({ error: 'Error al registrar' });
   }
 });
 
-// ============================
+// ======================================================================
 // 🐾 SERVICIOS
-// ============================
+// ======================================================================
 app.get('/servicios', async (req, res) => {
   try {
     const result = await executeQuery(
-      `SELECT id_servicio, nombre_servicio, descripcion 
-       FROM servicios
-       ORDER BY id_servicio`
+      `SELECT id_servicio, nombre_servicio, descripcion, duracion_minutos
+       FROM servicios ORDER BY id_servicio`
     );
     res.json(result);
   } catch (err) {
-    console.error('❌ Error al obtener servicios:', err);
+    console.error('❌ Error servicios:', err);
     res.status(500).json({ error: 'Error al obtener servicios' });
   }
 });
 
+// ======================================================================
+// 👨‍⚕️ PROFESIONALES
+// ======================================================================
+
+// Listar todos los profesionales
+app.get('/profesionales', async (req, res) => {
+  try {
+    const result = await executeQuery(
+      `SELECT p.id_profesional,
+              p.nombre,
+              p.apellido,
+              p.telefono,
+              p.email,
+              p.activo,
+              p.id_servicio,
+              s.nombre_servicio
+       FROM profesionales p
+       JOIN servicios s ON p.id_servicio = s.id_servicio
+       ORDER BY p.id_profesional`
+    );
+    res.json(result);
+  } catch (err) {
+    console.error('❌ Error profesionales:', err);
+    res.status(500).json({ error: 'Error al obtener profesionales' });
+  }
+});
+
+// Profesionales por servicio
+app.get('/profesionales/servicio/:idServicio', async (req, res) => {
+  const idServicio = Number(req.params.idServicio);
+
+  if (isNaN(idServicio)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  try {
+    const result = await executeQuery(
+      `SELECT id_profesional, nombre, apellido, telefono, email, activo, id_servicio
+       FROM profesionales
+       WHERE id_servicio = :id
+       ORDER BY nombre, apellido`,
+      { id: idServicio }
+    );
+    res.json(result);
+  } catch (err) {
+    console.error('❌ Error profesionales por servicio:', err);
+    res.status(500).json({ error: 'Error al obtener profesionales' });
+  }
+});
+
+// Crear profesional
+app.post('/profesionales', async (req, res) => {
+  const { nombre, apellido, id_servicio, telefono, email, activo } = req.body;
+
+  if (!nombre || !apellido || !id_servicio) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  }
+
+  try {
+    await executeQuery(
+      `INSERT INTO profesionales (nombre, apellido, id_servicio, telefono, email, activo)
+       VALUES (:nombre, :apellido, :id_servicio, :telefono, :email, NVL(:activo, 'S'))`,
+      { nombre, apellido, id_servicio, telefono, email, activo },
+      true
+    );
+    res.json({ message: '✅ Profesional creado' });
+
+  } catch (err) {
+    console.error('❌ Error crear profesional:', err);
+    res.status(500).json({ error: 'Error al crear profesional' });
+  }
+});
+
+// Editar profesional
+app.put('/profesionales/:id', async (req, res) => {
+  const idNum = Number(req.params.id);
+
+  if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+
+  const { nombre, apellido, id_servicio, telefono, email, activo } = req.body;
+
+  try {
+    await executeQuery(
+      `UPDATE profesionales SET
+          nombre = :nombre,
+          apellido = :apellido,
+          id_servicio = :id_servicio,
+          telefono = :telefono,
+          email = :email,
+          activo = :activo
+       WHERE id_profesional = :id`,
+      { id: idNum, nombre, apellido, id_servicio, telefono, email, activo },
+      true
+    );
+    res.json({ message: '✅ Profesional actualizado' });
+
+  } catch (err) {
+    console.error('❌ Error actualizar profesional:', err);
+    res.status(500).json({ error: 'Error al actualizar profesional' });
+  }
+});
+
+// Eliminar profesional
+app.delete('/profesionales/:id', async (req, res) => {
+  const idNum = Number(req.params.id);
+
+  if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+
+  try {
+    await executeQuery(
+      `DELETE FROM profesionales WHERE id_profesional = :id`,
+      { id: idNum },
+      true
+    );
+    res.json({ message: '🗑 Profesional eliminado' });
+
+  } catch (err) {
+    console.error('❌ Error eliminar profesional:', err);
+    res.status(500).json({ error: 'Error al eliminar profesional' });
+  }
+});
+
 // ============================
+// 👨‍⚕️ PROFESIONALES DISPONIBLES POR FECHA Y SERVICIO
+// ============================
+app.get('/profesionales/disponibles', async (req, res) => {
+  const { fecha_hora, id_servicio } = req.query;
+
+  if (!fecha_hora || !id_servicio) {
+    return res.status(400).json({ error: 'Falta fecha_hora o id_servicio' });
+  }
+
+  try {
+    const result = await executeQuery(
+      `
+      SELECT p.id_profesional, p.nombre, p.apellido
+      FROM profesionales p
+      WHERE p.id_servicio = :id_servicio
+      AND p.id_profesional NOT IN (
+          SELECT id_profesional
+          FROM citas
+          WHERE TO_CHAR(fecha_hora, 'YYYY-MM-DD HH24:MI') = :fecha_hora
+      )
+      ORDER BY p.nombre
+      `,
+      { fecha_hora, id_servicio }
+    );
+
+    res.json(result);
+
+  } catch (err) {
+    console.error("❌ Error obteniendo profesionales disponibles:", err);
+    res.status(500).json({ error: 'Error al obtener profesionales disponibles' });
+  }
+});
+
+
+// ======================================================================
 // 📅 CITAS
-// ============================
+// ======================================================================
+
+// Obtener citas con profesional incluido
 app.get('/citas', async (req, res) => {
   try {
     const result = await executeQuery(
       `SELECT 
-          c.id_cita, 
-          c.fecha_hora, 
+          c.id_cita,
+          c.fecha_hora,
           c.estado,
-          cl.nombre, 
-          cl.apellido, 
-          cl.rut, 
+          cl.nombre,
+          cl.apellido,
+          cl.rut,
           cl.telefono,
           cl.nombre_mascota,
           s.nombre_servicio,
-          c.id_servicio
+          c.id_servicio,
+          p.nombre AS nombre_profesional,
+          p.apellido AS apellido_profesional,
+          c.id_profesional
        FROM citas c
        JOIN clientes cl ON c.id_cliente = cl.id_cliente
        JOIN servicios s ON c.id_servicio = s.id_servicio
+       LEFT JOIN profesionales p ON p.id_profesional = c.id_profesional
        ORDER BY c.fecha_hora DESC`
     );
+
     res.json(result);
+
   } catch (err) {
-    console.error(err);
+    console.error('❌ Error citas:', err);
     res.status(500).json({ error: 'Error al obtener citas' });
   }
 });
 
 // ============================
-// 🕒 HORAS OCUPADAS
+// 👨‍⚕️ PROFESIONALES DISPONIBLES SEGÚN FECHA + HORA
 // ============================
-app.get('/citas/horas-ocupadas', async (req, res) => {
-  let { fecha, id_servicio } = req.query;
+app.get('/profesionales-disponibles', async (req, res) => {
+  const { id_servicio, fecha, hora } = req.query;
 
-  if (!fecha || !id_servicio) {
-    return res.status(400).json({ error: '❌ Falta fecha o id_servicio' });
-  }
-
-  id_servicio = Number(id_servicio);
-  if (isNaN(id_servicio)) {
-    return res.status(400).json({ error: 'id_servicio debe ser numérico' });
+  if (!id_servicio || !fecha || !hora) {
+    return res.status(400).json({ error: "Faltan parámetros" });
   }
 
   try {
     const result = await executeQuery(
-      `SELECT TO_CHAR(fecha_hora, 'HH24:MI') AS hora
-       FROM citas
-       WHERE TO_CHAR(fecha_hora, 'YYYY-MM-DD') = :fecha
-       AND id_servicio = :id_servicio`,
-      { fecha, id_servicio }
+      `
+      SELECT p.id_profesional, p.nombre, p.apellido, p.telefono, p.email, p.activo
+      FROM profesionales p
+      WHERE p.id_servicio = :id_servicio
+        AND p.id_profesional NOT IN (
+          SELECT c.id_profesional
+          FROM citas c
+          WHERE TO_CHAR(c.fecha_hora, 'YYYY-MM-DD') = :fecha
+            AND TO_CHAR(c.fecha_hora, 'HH24:MI') = :hora
+        )
+      ORDER BY p.nombre
+      `,
+      { id_servicio, fecha, hora }
     );
 
-    res.json({ ocupadas: result.map(r => r.HORA) });
+    res.json(result);
 
   } catch (err) {
-    console.error('❌ Error obteniendo horas ocupadas:', err);
-    res.status(500).json({ error: 'Error al obtener horas ocupadas' });
+    console.error("❌ Error profesionales disponibles:", err);
+    res.status(500).json({ error: "Error obteniendo profesionales disponibles" });
   }
 });
 
-// ============================
-// ✏️ EDITAR / CONFIRMAR CITA
-// ============================
+
+// ===============================
+// 🕒 HORAS OCUPADAS (validado correctamente)
+// ===============================
+app.get('/citas/horas-ocupadas', async (req, res) => {
+  const { fecha, id_servicio } = req.query;
+
+  if (!fecha || !id_servicio) {
+    return res.status(400).json({ error: 'Falta fecha o servicio' });
+  }
+
+  try {
+    // Total profesionales del servicio
+    const totalProfQuery = await executeQuery(
+      `SELECT COUNT(*) AS TOTAL FROM profesionales WHERE id_servicio = :id`,
+      { id: Number(id_servicio) }
+    );
+
+    const totalProfesionales = totalProfQuery[0].TOTAL;
+
+    // Horas ocupadas
+    const ocupadosQuery = await executeQuery(
+      `SELECT
+          TO_CHAR(fecha_hora, 'HH24:MI') AS HORA,
+          COUNT(*) AS OCUPADOS
+       FROM citas
+       WHERE TO_CHAR(fecha_hora, 'YYYY-MM-DD') = :fecha
+         AND id_servicio = :id
+       GROUP BY TO_CHAR(fecha_hora, 'HH24:MI')`,
+      { fecha, id: Number(id_servicio) }
+    );
+
+    // Horas donde TODOS están ocupados
+    const horasBloqueadas = ocupadosQuery
+      .filter(r => r.OCUPADOS >= totalProfesionales)
+      .map(r => r.HORA);
+
+    res.json({ ocupadas: horasBloqueadas });
+
+  } catch (err) {
+    console.error('❌ Error horas ocupadas:', err);
+    res.status(500).json({ error: 'Error obteniendo horas ocupadas' });
+  }
+});
+
+
+
+
+// Editar cita
 app.put('/citas/:id', async (req, res) => {
   const idNum = Number(req.params.id);
   const { fecha_hora, estado } = req.body;
 
-  if (isNaN(idNum)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
+  if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
 
   let setClauses = [];
   let binds = { id: idNum };
@@ -211,28 +456,45 @@ app.put('/citas/:id', async (req, res) => {
   }
 
   if (setClauses.length === 0) {
-    return res.status(400).json({ error: 'No se enviaron campos a actualizar' });
+    return res.status(400).json({ error: 'No hay campos a actualizar' });
   }
 
-  const query = `
-    UPDATE citas
-    SET ${setClauses.join(', ')}
-    WHERE id_cita = :id
-  `;
-
   try {
-    await executeQuery(query, binds, true);
-    res.json({ message: '✅ Cita actualizada correctamente' });
+    await executeQuery(
+      `UPDATE citas SET ${setClauses.join(', ')} WHERE id_cita = :id`,
+      binds,
+      true
+    );
+    res.json({ message: '✅ Cita actualizada' });
 
   } catch (err) {
-    console.error('❌ Error al actualizar cita:', err);
+    console.error('❌ Error actualizar cita:', err);
     res.status(500).json({ error: 'Error al actualizar cita' });
   }
 });
 
-// ============================
+// Eliminar cita
+app.delete('/citas/:id', async (req, res) => {
+  const idNum = Number(req.params.id);
+  if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+
+  try {
+    await executeQuery(
+      `DELETE FROM citas WHERE id_cita = :id`,
+      { id: idNum },
+      true
+    );
+    res.json({ message: '🗑 Cita eliminada' });
+
+  } catch (err) {
+    console.error('❌ Error eliminar cita:', err);
+    res.status(500).json({ error: 'Error al eliminar cita' });
+  }
+});
+
+// ======================================================================
 // 🔐 LOGIN ADMIN
-// ============================
+// ======================================================================
 app.post('/api/admin/login', async (req, res) => {
   const { usuario, password } = req.body;
 
@@ -242,109 +504,31 @@ app.post('/api/admin/login', async (req, res) => {
       { usuario }
     );
 
-    if (result.length === 0) {
+    if (result.length === 0)
       return res.status(401).json({ error: 'Usuario no encontrado' });
-    }
 
     const admin = result[0];
 
     if (password === admin.PASSWORD.trim()) {
-      res.json({ message: 'Acceso permitido', usuario: admin.USUARIO });
-    } else {
-      res.status(401).json({ error: 'Contraseña incorrecta' });
+      return res.json({ message: 'Acceso permitido', usuario: admin.USUARIO });
     }
 
+    return res.status(401).json({ error: 'Contraseña incorrecta' });
+
   } catch (err) {
-    console.error('❌ Error login:', err);
+    console.error('❌ Error login admin:', err);
     res.status(500).json({ error: 'Error interno' });
   }
 });
 
-// ============================
-// 🗑 ELIMINAR CITA
-// ============================
-app.delete('/citas/:id', async (req, res) => {
-  const idNum = Number(req.params.id);
+// ======================================================================
+// 📰 BLOG
+// ======================================================================
 
-  if (isNaN(idNum)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
-
-  try {
-    await executeQuery(
-      `DELETE FROM citas WHERE id_cita = :id`,
-      { id: idNum },
-      true
-    );
-    res.json({ message: '🗑 Cita eliminada correctamente' });
-  } catch (err) {
-    console.error('❌ Error al eliminar cita:', err);
-    res.status(500).json({ error: 'Error al eliminar cita' });
-  }
-});
-
-
-// ============================
-// ✏️ ACTUALIZAR POST DEL BLOG
-// ============================
-app.put('/blog/:id', async (req, res) => {
-  const idNum = Number(req.params.id);
-  const { titulo, contenido, imagen_url } = req.body;
-
-  if (isNaN(idNum)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
-
-  try {
-    await executeQuery(
-      `UPDATE blog 
-       SET titulo = :titulo, contenido = :contenido, imagen_url = :imagen_url
-       WHERE id_post = :id`,
-      { id: idNum, titulo, contenido, imagen_url },
-      true
-    );
-
-    res.json({ message: '✅ Post actualizado correctamente' });
-
-  } catch (err) {
-    console.error('❌ Error al actualizar post:', err);
-    res.status(500).json({ error: 'Error al actualizar post' });
-  }
-});
-
-
-// ============================
-// 🗑️ ELIMINAR POST DEL BLOG
-// ============================
-app.delete('/blog/:id', async (req, res) => {
-  const idNum = Number(req.params.id);
-
-  if (isNaN(idNum)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
-
-  try {
-    await executeQuery(
-      `DELETE FROM blog WHERE id_post = :id`,
-      { id: idNum },
-      true
-    );
-
-    res.json({ message: '🗑️ Post eliminado correctamente' });
-
-  } catch (err) {
-    console.error('❌ Error al eliminar post:', err);
-    res.status(500).json({ error: 'Error al eliminar post' });
-  }
-});
-
-
-
-// ============================
-// 📰 BLOG - LISTA
-// ============================
+// Obtener lista de posts
 app.get('/blog', async (req, res) => {
   let conn;
+
   try {
     conn = await oracledb.getConnection(dbConfig);
 
@@ -356,6 +540,7 @@ app.get('/blog', async (req, res) => {
 
     const posts = await Promise.all(
       result.rows.map(async (row) => {
+
         let contenido = row[2];
         let texto = '';
 
@@ -378,24 +563,22 @@ app.get('/blog', async (req, res) => {
     res.json(posts);
 
   } catch (err) {
-    console.error('❌ Error al obtener posts:', err);
+    console.error('❌ Error blog lista:', err);
     res.status(500).json({ error: 'Error al obtener posts' });
+
   } finally {
-    if (conn) try { await conn.close(); } catch {}
+    if (conn) try { conn.close(); } catch {}
   }
 });
 
-// ============================
-// 📄 OBTENER POST POR ID (CLOB SEGURO)
-// ============================
+// Obtener post por ID
 app.get('/blog/:id', async (req, res) => {
   const idNum = Number(req.params.id);
 
-  if (isNaN(idNum)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
+  if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
 
   let conn;
+
   try {
     conn = await oracledb.getConnection(dbConfig);
 
@@ -406,45 +589,161 @@ app.get('/blog/:id', async (req, res) => {
       { id: idNum }
     );
 
-    if (result.rows.length === 0) {
+    if (result.rows.length === 0)
       return res.status(404).json({ error: 'Post no encontrado' });
-    }
 
     const row = result.rows[0];
-
-    // 🟦 LEER CLOB ANTES DE CERRAR LA CONEXIÓN
     let contenido = row[2];
     let texto = '';
 
     if (contenido && typeof contenido === 'object' && contenido.getData) {
-      texto = await contenido.getData();  // ⬅ AQUÍ OCURRÍA EL ERROR
+      texto = await contenido.getData();
     } else if (typeof contenido === 'string') {
       texto = contenido;
     }
 
-    const post = {
+    res.json({
       id_post: row[0],
       titulo: row[1],
       contenido: texto,
       fecha: row[3],
       imagen_url: row[4]
-    };
-
-    res.json(post);
+    });
 
   } catch (err) {
-    console.error('❌ Error obteniendo post:', err);
-    res.status(500).json({ error: 'Error interno al obtener el post' });
+    console.error('❌ Error obtener post ID:', err);
+    res.status(500).json({ error: 'Error interno' });
 
   } finally {
-    if (conn) try { await conn.close(); } catch {}
+    if (conn) try { conn.close(); } catch {}
   }
 });
 
-// ============================
+// ======================================================
+// 📝 BLOG — CREAR UN POST
+// ======================================================
+app.post('/blog', async (req, res) => {
+  const { titulo, contenido, imagen_url } = req.body;
+
+  if (!titulo || !contenido) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  }
+
+  let conn;
+
+  try {
+    conn = await oracledb.getConnection(dbConfig);
+
+    const result = await conn.execute(
+      `INSERT INTO blog (titulo, contenido, fecha, imagen_url)
+       VALUES (:titulo, :contenido, SYSDATE, :imagen_url)
+       RETURNING id_post INTO :id`,
+      {
+        titulo,
+        contenido,
+        imagen_url,
+        id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }
+      },
+      { autoCommit: true }
+    );
+
+    res.json({ message: 'Post creado', id_post: result.outBinds.id[0] });
+
+  } catch (err) {
+    console.error('❌ Error al crear post:', err);
+    res.status(500).json({ error: 'Error al crear post' });
+
+  } finally {
+    if (conn) try { conn.close(); } catch {}
+  }
+});
+
+
+// ======================================================
+// ✏️ BLOG — ACTUALIZAR POST
+// ======================================================
+app.put('/blog/:id', async (req, res) => {
+  const idNum = Number(req.params.id);
+  const { titulo, contenido, imagen_url } = req.body;
+
+  if (isNaN(idNum)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  let conn;
+
+  try {
+    conn = await oracledb.getConnection(dbConfig);
+
+    const result = await conn.execute(
+      `UPDATE blog 
+       SET titulo = :titulo,
+           contenido = :contenido,
+           imagen_url = :imagen_url
+       WHERE id_post = :id`,
+      { titulo, contenido, imagen_url, id: idNum },
+      { autoCommit: true }
+    );
+
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ error: 'Post no encontrado' });
+    }
+
+    res.json({ message: 'Post actualizado' });
+
+  } catch (err) {
+    console.error('❌ Error al actualizar post:', err);
+    res.status(500).json({ error: 'Error al actualizar post' });
+
+  } finally {
+    if (conn) try { conn.close(); } catch {}
+  }
+});
+
+
+// ======================================================
+// 🗑 BLOG — ELIMINAR POST
+// ======================================================
+app.delete('/blog/:id', async (req, res) => {
+  const idNum = Number(req.params.id);
+
+  if (isNaN(idNum)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  let conn;
+
+  try {
+    conn = await oracledb.getConnection(dbConfig);
+
+    const result = await conn.execute(
+      `DELETE FROM blog WHERE id_post = :id`,
+      { id: idNum },
+      { autoCommit: true }
+    );
+
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ error: 'Post no encontrado' });
+    }
+
+    res.json({ message: 'Post eliminado' });
+
+  } catch (err) {
+    console.error('❌ Error al eliminar post:', err);
+    res.status(500).json({ error: 'Error al eliminar post' });
+
+  } finally {
+    if (conn) try { conn.close(); } catch {}
+  }
+});
+
+
+
+
+// ======================================================================
 // 🚀 INICIAR SERVIDOR
-// ============================
+// ======================================================================
 const PORT = 3000;
 app.listen(PORT, () =>
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`)
+  console.log(`✅ Servidor corriendo en: http://localhost:${PORT}`)
 );

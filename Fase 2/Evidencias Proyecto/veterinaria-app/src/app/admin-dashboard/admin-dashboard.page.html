@@ -11,6 +11,7 @@
     <div class="nav-links">
       <a href="/reserva">Crear Cita</a>
       <a href="/admin-blog">Adm Blog</a>
+      <a href="/admin-profesionales">Adm Profesionales</a>
       <ion-button color="danger" (click)="logout()">Cerrar sesión</ion-button>
     </div>
   </div>
@@ -39,17 +40,17 @@
   <!-- 🔹 Tabla -->
   <ion-grid *ngIf="citasFiltradas.length > 0; else sinCitas">
     <ion-row class="header-row">
-      <ion-col size="1">ID</ion-col>
-      <ion-col size="2">Cliente</ion-col>
-      <ion-col size="2">Telefono</ion-col>
+      <ion-col size="1.3">Profesional</ion-col>
+      <ion-col size="1.8">Cliente</ion-col>
+      <ion-col size="2.2">Telefono</ion-col>
       <ion-col size="2">Servicio</ion-col>
-      <ion-col size="2">Fecha</ion-col>
-      <ion-col size="1.5">Estado</ion-col>
-      <ion-col size="1.5">Acciones</ion-col>
+      <ion-col size="1.8">Fecha</ion-col>
+      <ion-col size="1.6">Estado</ion-col>
+      <ion-col size="1">Acciones</ion-col>
     </ion-row>
 
     <ion-row *ngFor="let c of citasFiltradas">
-      <ion-col size="1">{{ c.ID_CITA }}</ion-col>
+      <ion-col size="1">{{ c.NOMBRE_PROFESIONAL }} {{ c.APELLIDO_PROFESIONAL }}</ion-col>
       <ion-col size="2">{{ c.NOMBRE }} {{ c.APELLIDO }}</ion-col>
       <ion-col size="2">{{ c.TELEFONO }}</ion-col>
       <ion-col size="2">{{ c.NOMBRE_SERVICIO }}</ion-col>

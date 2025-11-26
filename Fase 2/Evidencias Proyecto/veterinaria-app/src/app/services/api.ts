@@ -1,4 +1,4 @@
-// api.service.ts (versión corregida y estable)
+// api.service.ts — versión FINAL corregida
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -31,13 +31,14 @@ export class ApiService {
   }
 
   // ===============================
-  // 🕒 HORAS OCUPADAS (reserva / admin)
+  // 🕒 HORAS OCUPADAS (correcto y optimizado)
   // ===============================
   getHorasOcupadas(fecha: string, id_servicio: number): Observable<any> {
+
     return this.http.get(`${this.BASE_URL}/citas/horas-ocupadas`, {
       params: {
-        fecha,
-        id_servicio: id_servicio?.toString() || '0'
+        fecha: fecha,
+        id_servicio: id_servicio.toString()
       }
     });
   }
@@ -52,18 +53,14 @@ export class ApiService {
   // ===============================
   // ⚙️ GESTIÓN DE CITAS (Admin)
   // ===============================
-
-  // ✔ Confirmar / cambiar estado (USA /citas/:id)
   actualizarEstado(id: number, estado: string) {
     return this.http.put(`${this.BASE_URL}/citas/${id}`, { estado });
   }
 
-  // ✔ Editar fecha + estado
   actualizarCita(id: number, fecha_hora: string, estado: string) {
     return this.http.put(`${this.BASE_URL}/citas/${id}`, { fecha_hora, estado });
   }
 
-  // ✔ Eliminar
   eliminarCita(id: number) {
     return this.http.delete(`${this.BASE_URL}/citas/${id}`);
   }
@@ -73,6 +70,10 @@ export class ApiService {
   // ===============================
   getPosts(): Observable<any[]> {
     return this.http.get<any[]>(`${this.BASE_URL}/blog`);
+  }
+
+  getPostById(id: number) {
+    return this.http.get(`${this.BASE_URL}/blog/${id}`);
   }
 
   createPost(data: { titulo: string; contenido: string; imagen_url?: string }) {
@@ -87,10 +88,42 @@ export class ApiService {
     return this.http.delete(`${this.BASE_URL}/blog/${id}`);
   }
 
-  getPostById(id: number) {
-  return this.http.get(`${this.BASE_URL}/blog/${id}`);
-}
+  // ======================================================
+  // 👨‍⚕️ PROFESIONALES
+  // ======================================================
 
+  // Obtener todos los profesionales
+  getProfesionales(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.BASE_URL}/profesionales`);
+  }
 
+  // Profesionales disponibles para la reserva
+  getProfesionalesDisponibles(fecha_hora: string, id_servicio: number) {
+
+    return this.http.get<any[]>(
+      `${this.BASE_URL}/profesionales/disponibles`,
+      { params: { fecha_hora, id_servicio: id_servicio.toString() } }
+    );
+  }
+
+  // Profesionales por servicio
+  getProfesionalesPorServicio(id_servicio: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.BASE_URL}/profesionales/servicio/${id_servicio}`);
+  }
+
+  // Crear profesional
+  crearProfesional(data: any): Observable<any> {
+    return this.http.post(`${this.BASE_URL}/profesionales`, data);
+  }
+
+  // Actualizar profesional
+  actualizarProfesional(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.BASE_URL}/profesionales/${id}`, data);
+  }
+
+  // Eliminar profesional
+  eliminarProfesional(id: number): Observable<any> {
+    return this.http.delete(`${this.BASE_URL}/profesionales/${id}`);
+  }
 
 }

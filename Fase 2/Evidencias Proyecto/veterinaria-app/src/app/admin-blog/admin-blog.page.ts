@@ -27,7 +27,7 @@ export class AdminBlogPage implements OnInit {
 
   ngOnInit() {
     // 🔒 Requiere estar logueado
-    if (!localStorage.getItem('admin')) this.router.navigate(['/admin-login']);
+    if (!localStorage.getItem('adminLogged')) this.router.navigate(['/admin-login']);
     this.cargar();
   }
 
@@ -205,7 +205,7 @@ export class AdminBlogPage implements OnInit {
   // 🚪 Logout
   // ===========================
   logout() {
-    localStorage.removeItem('admin');
+    localStorage.removeItem('adminLogged');
     this.router.navigate(['/admin-login']);
   }
 }

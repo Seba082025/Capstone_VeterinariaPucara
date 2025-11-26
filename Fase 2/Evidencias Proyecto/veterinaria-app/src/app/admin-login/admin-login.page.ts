@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, AlertController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-admin-login',
@@ -16,16 +16,20 @@ export class AdminLoginPage implements OnInit {
 
   usuario: string = '';
   password: string = '';
+  returnUrl: string = '/admin-dashboard';
 
   constructor(
     private api: ApiService,
     private alertCtrl: AlertController,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.returnUrl =
+      this.route.snapshot.queryParams['returnUrl'] || '/admin-dashboard';
+  }
 
-  // ✅ Método login del administrador
   async login() {
     if (!this.usuario || !this.password) {
       const alert = await this.alertCtrl.create({
@@ -39,24 +43,27 @@ export class AdminLoginPage implements OnInit {
 
     this.api.loginAdmin(this.usuario, this.password).subscribe({
       next: async (res: any) => {
-        console.log('✅ Acceso permitido:', res);
-        localStorage.setItem('admin', res.usuario);
+        console.log('✅ Login correcto:', res);
+
+        // CLAVE ÚNICA PARA TODO EL ADMIN
+        localStorage.setItem('adminLogged', 'true');
+        localStorage.setItem('adminUser', res.usuario);
 
         const alert = await this.alertCtrl.create({
           header: 'Bienvenido',
           message: `Acceso correcto, ${res.usuario}`,
           buttons: [{
             text: 'Continuar',
-            handler: () => this.router.navigate(['/admin-dashboard'])
+            handler: () => this.router.navigate([this.returnUrl])
           }]
         });
         await alert.present();
       },
-      error: async (err) => {
-        console.error('❌ Error en login:', err);
+
+      error: async () => {
         const alert = await this.alertCtrl.create({
           header: 'Acceso denegado',
-          message: err?.error?.error || 'Usuario o contraseña incorrectos.',
+          message: 'Usuario o contraseña incorrectos.',
           buttons: ['Intentar de nuevo']
         });
         await alert.present();
