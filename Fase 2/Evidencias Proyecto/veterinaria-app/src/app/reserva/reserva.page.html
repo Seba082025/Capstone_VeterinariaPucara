@@ -1,24 +1,26 @@
 <ion-content class="reserva-page ion-padding">
-  <!-- CONTENEDOR GLOBAL -->
   <div class="reserva-container">
 
-    <!-- Barra de navegación -->
+    <!-- NAVBAR -->
     <div class="navbar">
       <div class="nav-logo">
         <img src="./../../assets/Img/logo3.png" alt="Logo Veterinaria" />
         <span>Veterinaria Pucará</span>
       </div>
+
       <div class="nav-links">
-        <a href="#">Inicio</a>
-        <a href="/blog">Blog</a>
-        <a href="#">Nosotros</a>
-        <a href="#">Contacto</a>
+        <a routerLink="/">Inicio</a>
+        <a routerLink="/blog">Blog</a>
+        <a routerLink="/nosotros">Nosotros</a>
+        <a routerLink="/contacto">Contacto</a>
         <ion-button color="success" routerLink="/reserva">Reserva tu hora</ion-button>
       </div>
     </div>
 
-    <!-- Contenido principal -->
+    <!-- CONTENIDO -->
     <main class="contenido">
+
+      <!-- PASOS -->
       <ion-segment [(ngModel)]="paso" value="servicio" mode="ios">
         <ion-segment-button value="servicio"><ion-label>1. Servicio</ion-label></ion-segment-button>
         <ion-segment-button value="fecha"><ion-label>2. Fecha y hora</ion-label></ion-segment-button>
@@ -26,20 +28,27 @@
         <ion-segment-button value="datos"><ion-label>4. Datos</ion-label></ion-segment-button>
       </ion-segment>
 
-      <!-- PASO 1 -->
+      <!-- ===================== PASO 1: SERVICIO ===================== -->
       <div *ngIf="paso === 'servicio'" class="paso">
         <h2>Selecciona un servicio veterinario</h2>
+
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6" *ngFor="let s of servicios">
-              <ion-card (click)="seleccionarServicio(s.ID_SERVICIO || s.id_servicio)"
-                        [class.selected]="cita.id_servicio === (s.ID_SERVICIO || s.id_servicio)">
+              <ion-card
+                (click)="seleccionarServicio(s.ID_SERVICIO || s.id_servicio)"
+                [class.selected]="cita.id_servicio === (s.ID_SERVICIO || s.id_servicio)"
+              >
                 <ion-card-header>
-                  <ion-card-title>{{ s.NOMBRE_SERVICIO || s.nombre_servicio || s.nombre }}</ion-card-title>
+                  <ion-card-title>
+                    {{ s.NOMBRE_SERVICIO || s.nombre_servicio }}
+                  </ion-card-title>
                 </ion-card-header>
+
                 <ion-card-content>
                   <p>{{ s.DESCRIPCION || s.descripcion }}</p>
                   <p><strong>Precio:</strong> ${{ s.PRECIO || s.precio }}</p>
+                  <p><strong>Duración:</strong> {{ s.DURACION_MINUTOS }} min</p>
                 </ion-card-content>
               </ion-card>
             </ion-col>
@@ -47,13 +56,15 @@
         </ion-grid>
       </div>
 
-      <!-- PASO 2 -->
+      <!-- ===================== PASO 2: FECHA ===================== -->
       <div *ngIf="paso === 'fecha'" class="paso">
         <h2>Selecciona fecha y hora</h2>
-        <ion-datetime presentation="date"
-                      [(ngModel)]="fechaSeleccionada"
-                      (ionChange)="cargarHorasDisponibles()"
-                      [min]="today">
+
+        <ion-datetime
+          presentation="date"
+          [(ngModel)]="fechaSeleccionada"
+          (ionChange)="cargarHorasDisponibles()"
+          [min]="today">
         </ion-datetime>
 
         <div *ngIf="horasDisponibles.length > 0; else noHoras">
@@ -74,49 +85,90 @@
         <ion-button expand="block" (click)="continuarFecha()">Continuar</ion-button>
       </div>
 
-<!-- PASO 3 -->
-<div *ngIf="paso === 'profesional'" class="paso">
-  <h2>Selecciona el profesional</h2>
+      <!-- ===================== PASO 3: PROFESIONAL ===================== -->
+      <div *ngIf="paso === 'profesional'" class="paso">
+        <h2>Selecciona el profesional</h2>
 
-  <ion-list *ngIf="profesionales.length > 0; else sinProfesionales">
-    <ion-item 
-      button
-      *ngFor="let p of profesionales"
-      (click)="seleccionarProfesional(p)">
-      <ion-label>
-        {{ p.NOMBRE }} {{ p.APELLIDO }} 
-        <div *ngIf="p.TELEFONO || p.EMAIL" style="font-size: 0.9rem;">
-          <span *ngIf="p.TELEFONO">Tel: {{ p.TELEFONO }}</span><br *ngIf="p.TELEFONO && p.EMAIL">
-          <span *ngIf="p.EMAIL">Email: {{ p.EMAIL }}</span>
-        </div>
-      </ion-label>
-    </ion-item>
-  </ion-list>
-
-  <ng-template #sinProfesionales>
-    <p>No hay profesionales disponibles para esta fecha y hora.</p>
-  </ng-template>
-</div>
-
-      <!-- PASO 4 -->
-      <div *ngIf="paso === 'datos'" class="paso">
-        <h2>Datos del propietario y mascota</h2>
-        <ion-list>
-          <ion-item><ion-input placeholder="Nombre" [(ngModel)]="cliente.nombre"></ion-input></ion-item>
-          <ion-item><ion-input placeholder="Apellido" [(ngModel)]="cliente.apellido"></ion-input></ion-item>
-          <ion-item><ion-input placeholder="RUT" [(ngModel)]="cliente.rut"></ion-input></ion-item>
-          <ion-item><ion-input placeholder="Teléfono" [(ngModel)]="cliente.telefono"></ion-input></ion-item>
-          <ion-item><ion-input placeholder="Email" [(ngModel)]="cliente.email"></ion-input></ion-item>
-          <ion-item><ion-input placeholder="Nombre de la mascota" [(ngModel)]="cliente.nombre_mascota"></ion-input></ion-item>
-          <ion-item><ion-input placeholder="Raza" [(ngModel)]="cliente.raza"></ion-input></ion-item>
-          <ion-item><ion-input placeholder="Tipo de mascota" [(ngModel)]="cliente.tipo_mascota"></ion-input></ion-item>
+        <ion-list *ngIf="profesionales.length > 0; else sinProfesionales">
+          <ion-item button *ngFor="let p of profesionales" (click)="seleccionarProfesional(p)">
+            <ion-label>
+              {{ p.NOMBRE }} {{ p.APELLIDO }}
+              <div style="font-size: 0.9rem">
+                <span *ngIf="p.TELEFONO">Tel: {{ p.TELEFONO }}</span><br />
+                <span *ngIf="p.EMAIL">Email: {{ p.EMAIL }}</span>
+              </div>
+            </ion-label>
+          </ion-item>
         </ion-list>
 
-        <ion-button expand="block" color="success" (click)="reservar()">Confirmar Reserva</ion-button>
+        <ng-template #sinProfesionales>
+          <p>No hay profesionales disponibles.</p>
+        </ng-template>
       </div>
+
+      <!-- ===================== PASO 4: DATOS ===================== -->
+      <div *ngIf="paso === 'datos'" class="paso">
+        <h2>Datos del propietario y mascota</h2>
+
+        <form [formGroup]="formDatos">
+
+          <ion-item>
+            <ion-input label="Nombre" formControlName="nombre"></ion-input>
+          </ion-item>
+          <p class="error" *ngIf="formDatos.get('nombre')?.touched && formDatos.get('nombre')?.invalid">
+            ❌ Debes ingresar un nombre.
+          </p>
+
+          <ion-item>
+            <ion-input label="Apellido" formControlName="apellido"></ion-input>
+          </ion-item>
+          <p class="error" *ngIf="formDatos.get('apellido')?.touched && formDatos.get('apellido')?.invalid">
+            ❌ Debes ingresar un apellido.
+          </p>
+
+          <ion-item>
+            <ion-input label="RUT" formControlName="rut"></ion-input>
+          </ion-item>
+          <p class="error" *ngIf="formDatos.get('rut')?.errors?.['rutInvalido']">
+            ❌ RUT inválido. Ej: 12345678-5
+          </p>
+
+          <ion-item>
+            <ion-input label="Teléfono" formControlName="telefono"></ion-input>
+          </ion-item>
+          <p class="error" *ngIf="formDatos.get('telefono')?.invalid && formDatos.get('telefono')?.touched">
+            ❌ El teléfono debe tener 9 dígitos.
+          </p>
+
+          <ion-item>
+            <ion-input label="Email" formControlName="email"></ion-input>
+          </ion-item>
+          <p class="error" *ngIf="formDatos.get('email')?.invalid && formDatos.get('email')?.touched">
+            ❌ Ingresa un correo válido.
+          </p>
+
+          <ion-item>
+            <ion-input label="Nombre de la mascota" formControlName="nombre_mascota"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Raza" formControlName="raza"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input label="Tipo de mascota" formControlName="tipo_mascota"></ion-input>
+          </ion-item>
+
+          <ion-button expand="block" color="success" [disabled]="formDatos.invalid" (click)="reservar()">
+            Confirmar Reserva
+          </ion-button>
+
+        </form>
+      </div>
+
     </main>
 
-    <!-- Pie de página -->
+    <!-- FOOTER -->
     <footer>
       <div class="footer-content">
         <div>
@@ -124,7 +176,7 @@
           <ul>
             <li><a href="#">Nuestra Clínica</a></li>
             <li><a href="#">Preguntas Frecuentes</a></li>
-            <li><a href="/admin-login">Ingreso Admin</a></li>
+            <li><a routerLink="/admin-login">Ingreso Admin</a></li>
           </ul>
         </div>
 
@@ -147,5 +199,6 @@
         © 2025 Clínica Veterinaria Pucará. Todos los derechos reservados.
       </div>
     </footer>
+
   </div>
 </ion-content>

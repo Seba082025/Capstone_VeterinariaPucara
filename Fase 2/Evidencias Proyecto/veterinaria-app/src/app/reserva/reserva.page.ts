@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { IonicModule, AlertController } from '@ionic/angular';
 import { ApiService } from '../services/api';
 import { CommonModule } from '@angular/common';
@@ -9,12 +9,15 @@ import { CommonModule } from '@angular/common';
   templateUrl: './reserva.page.html',
   styleUrls: ['./reserva.page.scss'],
   standalone: true,
-  imports: [IonicModule, FormsModule, CommonModule]
+  imports: [IonicModule, FormsModule, ReactiveFormsModule, CommonModule]
 })
 export class ReservaPage implements OnInit {
 
   servicios: any[] = [];
   profesionales: any[] = [];
+
+  // 🟦 FORMULARIO REACTIVO NUEVO
+  formDatos!: FormGroup;
 
   cliente = {
     nombre: '',
@@ -47,9 +50,27 @@ export class ReservaPage implements OnInit {
 
   horasDisponibles: string[] = [];
 
-  constructor(private api: ApiService, private alertCtrl: AlertController) {}
+  constructor(
+    private api: ApiService, 
+    private alertCtrl: AlertController,
+    private fb: FormBuilder
+  ) {}
 
   ngOnInit() {
+
+    // 🟦 CREAR FORMULARIO REACTIVO
+    this.formDatos = this.fb.group({
+      nombre: ['', Validators.required],
+      apellido: ['', Validators.required],
+      rut: ['', [Validators.required, this.validarRut]],
+      telefono: ['', [Validators.required, Validators.pattern(/^\d{9}$/)]],
+      email: ['', [Validators.required, Validators.email]],
+      nombre_mascota: ['', Validators.required],
+      raza: ['', Validators.required],
+      tipo_mascota: ['', Validators.required]
+    });
+
+    // 🟦 CARGAR SERVICIOS
     this.api.getServicios().subscribe({
       next: (res: any) => this.servicios = res,
       error: (err) => console.error('❌ Error al cargar servicios:', err)
@@ -65,26 +86,24 @@ export class ReservaPage implements OnInit {
   }
 
   // ===========================================================
-  // 2️⃣ Cargar HORAS considerando duración del servicio
+  // 2️⃣ Cargar HORAS según duración
   // ===========================================================
   cargarHorasDisponibles() {
     if (!this.fechaSeleccionada || !this.cita.id_servicio) return;
 
-    // 🟦 COMPATIBILIDAD: Oracle devuelve MAYÚSCULAS, Angular minúsculas
     const servicio = this.servicios.find(s =>
       s.id_servicio === this.cita.id_servicio ||
       s.ID_SERVICIO === this.cita.id_servicio
     );
+
     if (!servicio) return;
 
-    // 🟦 Duración compatible con ambas formas
     const duracion = servicio.duracion_minutos || servicio.DURACION_MINUTOS;
-
     const fecha = this.fechaSeleccionada.split('T')[0];
 
-    // 🐶 CONSULTA VETERINARIA (30 minutos)
+    // CONSULTA (30m)
     if (duracion === 30) {
-      this.api.getHorasOcupadas(fecha, this.cita.id_servicio).subscribe({
+      this.api.getHorasOcupadas(fecha, Number(this.cita.id_servicio)).subscribe({
         next: (res: any) => {
           const bloqueadas = res.ocupadas || [];
           this.horasDisponibles = this.horasBase.filter(h => !bloqueadas.includes(h));
@@ -94,11 +113,11 @@ export class ReservaPage implements OnInit {
       return;
     }
 
-    // ✂️ PELUQUERÍA (120 minutos → 2 horas)
+    // PELUQUERÍA (120m)
     if (duracion === 120) {
       const horasPeluqueria = ['09:00', '11:00', '13:00', '15:00'];
 
-      this.api.getHorasOcupadas(fecha, this.cita.id_servicio).subscribe({
+      this.api.getHorasOcupadas(fecha, Number(this.cita.id_servicio)).subscribe({
         next: (res: any) => {
           const bloqueadas = res.ocupadas || [];
           this.horasDisponibles = horasPeluqueria.filter(h => !bloqueadas.includes(h));
@@ -129,19 +148,18 @@ export class ReservaPage implements OnInit {
     if (!this.cita.id_servicio || !this.cita.fecha_hora) return;
 
     this.api
-      .getProfesionalesDisponibles(this.cita.fecha_hora, this.cita.id_servicio)
+      .getProfesionalesDisponibles(
+        this.cita.fecha_hora, 
+        Number(this.cita.id_servicio)
+      )
       .subscribe({
-        next: (res: any) => {
-          this.profesionales = res;
-        },
-        error: (err) => {
-          console.error('❌ Error al cargar profesionales disponibles:', err);
-        }
+        next: (res: any) => this.profesionales = res,
+        error: (err) => console.error('❌ Error carga profesionales:', err)
       });
   }
 
   seleccionarProfesional(p: any) {
-    this.cita.id_profesional = p.ID_PROFESIONAL;
+    this.cita.id_profesional = p.ID_PROFESIONAL || p.id_profesional;
     this.paso = 'datos';
   }
 
@@ -149,13 +167,14 @@ export class ReservaPage implements OnInit {
   // 4️⃣ Confirmar reserva
   // ===========================================================
   async reservar() {
-    if (!this.cita.id_servicio || !this.cita.fecha_hora || !this.cita.id_profesional) {
-      alert('Debe seleccionar servicio, fecha, hora y profesional.');
+
+    if (this.formDatos.invalid) {
+      this.formDatos.markAllAsTouched();
       return;
     }
 
     const data = {
-      ...this.cliente,
+      ...this.formDatos.value,
       id_servicio: this.cita.id_servicio,
       fecha_hora: this.cita.fecha_hora,
       id_profesional: this.cita.id_profesional
@@ -173,11 +192,41 @@ export class ReservaPage implements OnInit {
       error: async (err) => {
         const alert = await this.alertCtrl.create({
           header: 'Error',
-          message: err?.error?.error || 'No se pudo agendar la cita.',
+          message: err?.error?.error || 'No se pudo registrar la reserva.',
           buttons: ['Cerrar']
         });
         await alert.present();
       }
     });
   }
+
+  // ===========================================================
+  // 🧪 Validador de RUT chileno
+  // ===========================================================
+  validarRut(control: any) {
+  const rut = (control.value || '').replace(/\./g, '').replace('-', '');
+
+  if (rut.length < 8) return { rutInvalido: true };
+
+  const cuerpo = rut.slice(0, -1);
+  let dv = rut.slice(-1).toUpperCase();
+
+  let suma = 0;
+  let multiplo = 2;
+
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += Number(cuerpo[i]) * multiplo;
+    multiplo = multiplo < 7 ? multiplo + 1 : 2;
+  }
+
+  // 🟦 CALCULO DV ESPERADO (string)
+  let dvEsperadoNum = 11 - (suma % 11);
+  let dvEsperado =
+    dvEsperadoNum === 11 ? '0' :
+    dvEsperadoNum === 10 ? 'K' :
+    dvEsperadoNum.toString();
+
+  // 🟦 COMPARACIÓN
+  return dv === dvEsperado ? null : { rutInvalido: true };
+}
 }

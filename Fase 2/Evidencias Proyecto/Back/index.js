@@ -4,10 +4,53 @@
 const express = require('express');
 const oracledb = require('oracledb');
 const cors = require('cors');
+const nodemailer = require("nodemailer");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ===================
+// ✉️ CONFIG EMAIL
+// ===================
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "naxololaso@gmail.com",  // ← tu correo
+    pass: "mcdsaxnupaveufph"       // ← contraseña de aplicación
+  }
+});
+
+// Función para enviar correos
+async function enviarCorreoReserva(data) {
+  const { email, nombre, apellido, fecha_hora, servicio, profesional } = data;
+
+  const html = `
+    <h2>¡Reserva Creada con exito, ${nombre} ${apellido}!</h2>
+    <p><strong>Servicio:</strong> ${servicio}</p>
+    <p><strong>Profesional:</strong> ${profesional}</p>
+    <p><strong>Fecha y hora:</strong> ${fecha_hora}</p>
+
+    <br>
+    <p>Gracias por reservar en <strong>Clínica Veterinaria Pucará</strong> 🐶🐱</p>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: '"Clínica Veterinaria Pucará" <TU_CORREO@gmail.com>',
+      to: email,
+      subject: "Detalles de tu reserva",
+      html
+    });
+
+    console.log("📩 Correo enviado correctamente a:", email);
+
+  } catch (err) {
+    console.error("❌ Error enviando correo:", err);
+  }
+}
+
+
 
 // ======================================================================
 // 🔧 CONFIGURACIÓN ORACLE
@@ -54,7 +97,6 @@ app.get('/clientes', async (req, res) => {
   }
 });
 
-// Crear cliente + cita (con profesional)
 app.post('/clientes', async (req, res) => {
   console.log('🟢 Datos recibidos:', req.body);
 
@@ -133,7 +175,34 @@ app.post('/clientes', async (req, res) => {
       true
     );
 
-    res.json({ message: '✅ Cita registrada correctamente', id_cliente });
+    // 4️⃣ Obtener info del servicio y profesional para el correo
+    const servicioData = await executeQuery(
+      `SELECT nombre_servicio FROM servicios WHERE id_servicio = :id`,
+      { id: id_servicio }
+    );
+
+    const profesionalData = await executeQuery(
+      `SELECT nombre, apellido FROM profesionales WHERE id_profesional = :id`,
+      { id: id_profesional }
+    );
+
+    const nombreServicio = servicioData[0].NOMBRE_SERVICIO;
+    const nombreProfesional =
+      profesionalData.length > 0
+        ? `${profesionalData[0].NOMBRE} ${profesionalData[0].APELLIDO}`
+        : "No asignado";
+
+    // 5️⃣ Enviar correo
+    enviarCorreoReserva({
+      email,
+      nombre,
+      apellido,
+      fecha_hora: fechaFormateada,
+      servicio: nombreServicio,
+      profesional: nombreProfesional
+    });
+
+    res.json({ message: '✅ Cita registrada correctamente y correo enviado', id_cliente });
 
   } catch (err) {
     console.error('❌ Error al registrar cliente + cita:', err);
@@ -147,7 +216,7 @@ app.post('/clientes', async (req, res) => {
 app.get('/servicios', async (req, res) => {
   try {
     const result = await executeQuery(
-      `SELECT id_servicio, nombre_servicio, descripcion, duracion_minutos
+      `SELECT id_servicio, nombre_servicio, descripcion, duracion_minutos, precio
        FROM servicios ORDER BY id_servicio`
     );
     res.json(result);
@@ -736,6 +805,80 @@ app.delete('/blog/:id', async (req, res) => {
     if (conn) try { conn.close(); } catch {}
   }
 });
+
+// Servicios
+
+app.post('/servicios', async (req, res) => {
+  const { nombre_servicio, descripcion, precio, duracion_minutos } = req.body;
+
+  try {
+    await executeQuery(`
+      INSERT INTO servicios (nombre_servicio, descripcion, precio, duracion_minutos)
+      VALUES (:nombre_servicio, :descripcion, :precio, :duracion_minutos)
+    `, {
+      nombre_servicio,
+      descripcion,
+      precio,
+      duracion_minutos
+    }, true);
+
+    res.json({ ok: true, message: 'Servicio creado correctamente' });
+
+  } catch (err) {
+    res.status(500).json({ error: 'Error al crear servicio', err });
+  }
+});
+
+
+app.put('/servicios/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nombre_servicio, descripcion, precio, duracion_minutos } = req.body;
+
+  try {
+    await executeQuery(`
+      UPDATE servicios
+      SET nombre_servicio = :nombre_servicio,
+          descripcion = :descripcion,
+          precio = :precio,
+          duracion_minutos = :duracion_minutos
+      WHERE id_servicio = :id
+    `, {
+      id,
+      nombre_servicio,
+      descripcion,
+      precio,
+      duracion_minutos
+    }, true);
+
+    res.json({ ok: true, message: 'Servicio actualizado correctamente' });
+
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar servicio', err });
+  }
+});
+
+
+app.delete('/servicios/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await executeQuery(`
+      DELETE FROM servicios WHERE id_servicio = :id
+    `, { id }, true);
+
+    res.json({ ok: true, message: 'Servicio eliminado correctamente' });
+
+  } catch (err) {
+    if (err.errorNum === 2292) {
+      return res.status(400).json({
+        error: 'No se puede eliminar: el servicio tiene citas asociadas'
+      });
+    }
+
+    res.status(500).json({ error: 'Error al eliminar servicio', err });
+  }
+});
+
 
 
 

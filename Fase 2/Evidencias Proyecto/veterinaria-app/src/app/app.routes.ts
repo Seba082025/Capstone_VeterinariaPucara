@@ -62,6 +62,10 @@ export const routes: Routes = [
       import('./admin-profesionales/admin-profesionales.page').then(m => m.AdminProfesionalesPage),
     canActivate: [adminGuard],
   },
+    {
+    path: 'admin-servicios',
+    loadComponent: () => import('./admin-servicios/admin-servicios.page').then( m => m.AdminServiciosPage)
+  },
 
   // -------------------
   // RUTA WILDCARD

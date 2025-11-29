@@ -1,0 +1,146 @@
+/* ============================
+   NAVBAR
+============================ */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9999;
+  background-color: #0b4bb1;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-logo { display: flex; align-items: center; }
+.nav-logo img { width: 45px; margin-right: 10px; }
+
+.nav-links { display: flex; gap: 15px; align-items: center; }
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.navbar-space { height: 90px; }
+
+/* ============================
+   ION CONTENT
+============================ */
+ion-content {
+  --background: #f8f9fc;
+  --padding-bottom: 40px;
+  z-index: 1;
+}
+
+/* ============================
+   FORMULARIO
+============================ */
+.formulario-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.formulario-card h2 {
+  text-align: center;
+  color: #0b4bb1;
+  margin-bottom: 12px;
+}
+
+/* ============================
+   LISTADO
+============================ */
+.lista .item {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* ============================
+   FOOTER
+============================ */
+footer {
+  background: linear-gradient(180deg, #0b4bb1, #083b8a);
+  color: white;
+  text-align: center;
+  padding: 30px 15px;
+  margin-top: 40px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.footer-content ul { list-style: none; padding: 0; }
+.footer-content a { color: white; text-decoration: underline; }
+
+.footer-bottom {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  border-top: 0;
+}
+
+/* ============================
+   RESPONSIVE
+============================ */
+@media (max-width: 600px) {
+  .lista .item { flex-direction: column; align-items: flex-start; }
+}
+
+/* CENTRAR TÍTULO Y BOTÓN */
+.contenedor-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.contenedor-header h1 {
+  margin-bottom: 15px;
+}
+
+.acciones-top {
+  display: flex;
+  justify-content: center;
+}
+
+
+footer {
+  background: linear-gradient(180deg, #0b4bb1, #083b8a);
+  color: white;
+  text-align: center;
+  padding: 40px 20px;
+  width: 100%;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: auto;
+}
+
+footer h4 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.footer-bottom {
+  margin-top: 25px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}

@@ -88,6 +88,21 @@ export class ApiService {
     return this.http.delete(`${this.BASE_URL}/blog/${id}`);
   }
 
+  // SERVICIOS CRUD
+
+crearServicio(data: any) {
+  return this.http.post(`${this.BASE_URL}/servicios`, data);
+}
+
+editarServicio(id: number, data: any) {
+  return this.http.put(`${this.BASE_URL}/servicios/${id}`, data);
+}
+
+eliminarServicio(id: number) {
+  return this.http.delete(`${this.BASE_URL}/servicios/${id}`);
+}
+
+
   // ======================================================
   // 👨‍⚕️ PROFESIONALES
   // ======================================================

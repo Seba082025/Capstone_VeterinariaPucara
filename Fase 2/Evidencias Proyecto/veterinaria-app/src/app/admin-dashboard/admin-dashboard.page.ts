@@ -193,8 +193,9 @@ export class AdminDashboardPage implements OnInit {
     });
   }
 
-  logout() {
-    localStorage.removeItem('adminLogged');
-    this.router.navigate(['/admin-login']);
-  }
+logout() {
+  localStorage.removeItem('adminLogged');
+  localStorage.removeItem('adminUser');
+  this.router.navigate(['/admin-login']);
+}
 }

@@ -26,6 +26,7 @@ export class AdminLoginPage implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Lee returnUrl si viene desde el guard
     this.returnUrl =
       this.route.snapshot.queryParams['returnUrl'] || '/admin-dashboard';
   }
@@ -45,13 +46,13 @@ export class AdminLoginPage implements OnInit {
       next: async (res: any) => {
         console.log('✅ Login correcto:', res);
 
-        // CLAVE ÚNICA PARA TODO EL ADMIN
+        // Marca sesión de admin
         localStorage.setItem('adminLogged', 'true');
-        localStorage.setItem('adminUser', res.usuario);
+        localStorage.setItem('adminUser', res?.usuario ?? this.usuario);
 
         const alert = await this.alertCtrl.create({
           header: 'Bienvenido',
-          message: `Acceso correcto, ${res.usuario}`,
+          message: `Acceso correcto, ${res?.usuario ?? this.usuario}`,
           buttons: [{
             text: 'Continuar',
             handler: () => this.router.navigate([this.returnUrl])
@@ -61,6 +62,10 @@ export class AdminLoginPage implements OnInit {
       },
 
       error: async () => {
+        // Limpia posibles restos de sesión mala
+        localStorage.removeItem('adminLogged');
+        localStorage.removeItem('adminUser');
+
         const alert = await this.alertCtrl.create({
           header: 'Acceso denegado',
           message: 'Usuario o contraseña incorrectos.',
